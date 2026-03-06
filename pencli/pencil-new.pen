@@ -190,7 +190,8 @@
           "lineHeight": 1.5,
           "textAlign": "center",
           "fontFamily": "Inter",
-          "fontSize": 16
+          "fontSize": 16,
+          "fontWeight": "normal"
         },
         {
           "type": "frame",
@@ -510,7 +511,18 @@
                   "type": "frame",
                   "id": "mSrY6",
                   "name": "walletNameRow",
+                  "fill": "#1A2F4A",
+                  "cornerRadius": 10,
+                  "stroke": {
+                    "align": "inside",
+                    "thickness": 1,
+                    "fill": "#3B82F650"
+                  },
                   "gap": 6,
+                  "padding": [
+                    5,
+                    10
+                  ],
                   "alignItems": "center",
                   "children": [
                     {
@@ -1405,6 +1417,48 @@
                   ]
                 }
               ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "X5o36",
+          "x": 14,
+          "y": 128,
+          "name": "TapHint",
+          "fill": "#0B1E35",
+          "cornerRadius": 7,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#3B82F660"
+          },
+          "gap": 5,
+          "padding": [
+            5,
+            8
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "e33FV",
+              "name": "annS2Ico",
+              "width": 11,
+              "height": 11,
+              "iconFontName": "arrow-up-left",
+              "iconFontFamily": "lucide",
+              "fill": "#60A5FA"
+            },
+            {
+              "type": "text",
+              "id": "KRcc9",
+              "name": "annS2Txt",
+              "fill": "#60A5FA",
+              "content": "Нажмите ↑ — откроет список кошельков (Экран 8)",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
             }
           ]
         }
@@ -5566,12 +5620,12 @@
                   "name": "addBtnInner",
                   "width": "fill_container",
                   "height": 52,
-                  "fill": "#161B22",
+                  "fill": "#0D1F3C",
                   "cornerRadius": 16,
                   "stroke": {
                     "align": "inside",
-                    "thickness": 1,
-                    "fill": "#374151"
+                    "thickness": 2,
+                    "fill": "#3B82F6"
                   },
                   "gap": 10,
                   "justifyContent": "center",
@@ -5584,20 +5638,62 @@
                       "height": 20,
                       "iconFontName": "circle-plus",
                       "iconFontFamily": "lucide",
-                      "fill": "#3B82F6"
+                      "fill": "#60A5FA"
                     },
                     {
                       "type": "text",
                       "id": "23uue",
-                      "fill": "#3B82F6",
+                      "fill": "#60A5FA",
                       "content": "Добавить кошелёк",
                       "fontFamily": "Inter",
                       "fontSize": 16,
-                      "fontWeight": "600"
+                      "fontWeight": "700"
                     }
                   ]
                 }
               ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "Gznat",
+          "x": 14,
+          "y": 744,
+          "name": "TapHint",
+          "fill": "#0B1E35",
+          "cornerRadius": 7,
+          "stroke": {
+            "align": "inside",
+            "thickness": 1,
+            "fill": "#3B82F660"
+          },
+          "gap": 5,
+          "padding": [
+            5,
+            8
+          ],
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "6LjXk",
+              "name": "annS8Ico",
+              "width": 11,
+              "height": 11,
+              "iconFontName": "arrow-down",
+              "iconFontFamily": "lucide",
+              "fill": "#60A5FA"
+            },
+            {
+              "type": "text",
+              "id": "WfbvW",
+              "name": "annS8Txt",
+              "fill": "#60A5FA",
+              "content": "Нажмите ↓ — откроет форму добавления (Экран 9)",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "normal"
             }
           ]
         }
@@ -7318,6 +7414,540 @@
               ]
             }
           ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "hevLc",
+      "x": 430,
+      "y": 900,
+      "name": "Флоу: Добавление кошелька",
+      "width": 840,
+      "height": 180,
+      "fill": "#0D1117",
+      "cornerRadius": 20,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#1F2937"
+      },
+      "layout": "vertical",
+      "gap": 12,
+      "padding": [
+        18,
+        24
+      ],
+      "children": [
+        {
+          "type": "frame",
+          "id": "H3zex",
+          "name": "fhdr",
+          "gap": 8,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "icon_font",
+              "id": "g8HuF",
+              "name": "fhdrIco",
+              "width": 14,
+              "height": 14,
+              "iconFontName": "route",
+              "iconFontFamily": "lucide",
+              "fill": "#3B82F6"
+            },
+            {
+              "type": "text",
+              "id": "WGn5k",
+              "name": "fhdrTxt",
+              "fill": "#6B7280",
+              "content": "КАК ДОБАВИТЬ НОВЫЙ КОШЕЛЁК",
+              "fontFamily": "Inter",
+              "fontSize": 11,
+              "fontWeight": "700",
+              "letterSpacing": 0.8
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "tVPcB",
+          "name": "stepsRow",
+          "width": "fill_container",
+          "height": "fill_container",
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "DHLNU",
+              "name": "s1",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "VyGOp",
+                  "name": "s1top",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Alm7K",
+                      "name": "s1num",
+                      "width": 22,
+                      "height": 22,
+                      "fill": "#3B82F6",
+                      "cornerRadius": 11,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "dfKtA",
+                          "name": "s1numT",
+                          "fill": "#FFFFFF",
+                          "content": "1",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "sQvVI",
+                      "name": "s1lbl",
+                      "fill": "#FFFFFF",
+                      "content": "Экран 2 — Главный кошелёк",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "846yq",
+                  "name": "s1chip",
+                  "fill": "#1E3A5F",
+                  "cornerRadius": 8,
+                  "gap": 5,
+                  "padding": [
+                    5,
+                    10
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "h0bkF",
+                      "name": "s1cIco",
+                      "width": 11,
+                      "height": 11,
+                      "iconFontName": "mouse-pointer-click",
+                      "iconFontFamily": "lucide",
+                      "fill": "#60A5FA"
+                    },
+                    {
+                      "type": "text",
+                      "id": "BSVkJ",
+                      "name": "s1cTxt",
+                      "fill": "#60A5FA",
+                      "content": "Нажать «Мой кошелёк ⌄» в хедере",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "o8v46",
+              "name": "arr1",
+              "width": 48,
+              "height": "fill_container",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "Fhda1",
+                  "name": "arr1ico",
+                  "width": 22,
+                  "height": 22,
+                  "iconFontName": "arrow-right",
+                  "iconFontFamily": "lucide",
+                  "fill": "#374151"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "lQ2qm",
+              "name": "s2",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "dlrCe",
+                  "name": "s2top",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "fSFMp",
+                      "name": "s2num",
+                      "width": 22,
+                      "height": 22,
+                      "fill": "#3B82F6",
+                      "cornerRadius": 11,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "FfvWa",
+                          "name": "s2numT",
+                          "fill": "#FFFFFF",
+                          "content": "2",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "WphIz",
+                      "name": "s2lbl",
+                      "fill": "#FFFFFF",
+                      "content": "Экран 8 — Список кошельков",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MISRa",
+                  "name": "s2chip",
+                  "fill": "#1E3A5F",
+                  "cornerRadius": 8,
+                  "gap": 5,
+                  "padding": [
+                    5,
+                    10
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "j9Bfi",
+                      "name": "s2cIco",
+                      "width": 11,
+                      "height": 11,
+                      "iconFontName": "mouse-pointer-click",
+                      "iconFontFamily": "lucide",
+                      "fill": "#60A5FA"
+                    },
+                    {
+                      "type": "text",
+                      "id": "WtWpN",
+                      "name": "s2cTxt",
+                      "fill": "#60A5FA",
+                      "content": "Нажать «+ Добавить кошелёк»",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "hnIwf",
+              "name": "arr2",
+              "width": 48,
+              "height": "fill_container",
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "lUX3G",
+                  "name": "arr2ico",
+                  "width": 22,
+                  "height": 22,
+                  "iconFontName": "arrow-right",
+                  "iconFontFamily": "lucide",
+                  "fill": "#374151"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "VQDtK",
+              "name": "s3",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 8,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "4wCgh",
+                  "name": "s3top",
+                  "gap": 8,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "6hlU3",
+                      "name": "s3num",
+                      "width": 22,
+                      "height": 22,
+                      "fill": "#22C55E",
+                      "cornerRadius": 11,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "TgKEe",
+                          "name": "s3numT",
+                          "fill": "#FFFFFF",
+                          "content": "3",
+                          "fontFamily": "Inter",
+                          "fontSize": 11,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "1YiO2",
+                      "name": "s3lbl",
+                      "fill": "#FFFFFF",
+                      "content": "Экран 9 — Добавить кошелёк",
+                      "fontFamily": "Inter",
+                      "fontSize": 12,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "904W8",
+                  "name": "s3chip",
+                  "fill": "#14532D",
+                  "cornerRadius": 8,
+                  "gap": 5,
+                  "padding": [
+                    5,
+                    10
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon_font",
+                      "id": "ICg87",
+                      "name": "s3cIco",
+                      "width": 11,
+                      "height": 11,
+                      "iconFontName": "circle-check",
+                      "iconFontFamily": "lucide",
+                      "fill": "#4ADE80"
+                    },
+                    {
+                      "type": "text",
+                      "id": "vauZ0",
+                      "name": "s3cTxt",
+                      "fill": "#4ADE80",
+                      "content": "Выбрать тип, ввести имя → «Продолжить»",
+                      "fontFamily": "Inter",
+                      "fontSize": 11,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "IIVyl",
+      "x": 625,
+      "y": -120,
+      "name": "NavArrow 2→8",
+      "width": 2580,
+      "height": 28,
+      "fill": "#0A1628",
+      "cornerRadius": 6,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#3B82F650"
+      },
+      "padding": [
+        0,
+        10
+      ],
+      "justifyContent": "space_between",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "text",
+          "id": "q5Coq",
+          "name": "navBarLbl",
+          "fill": "#60A5FA",
+          "content": "нажать «Мой кошелёк ⌄» → переходит в Список кошельков",
+          "fontFamily": "Inter",
+          "fontSize": 11,
+          "fontWeight": "normal"
+        },
+        {
+          "type": "icon_font",
+          "id": "iLcQo",
+          "name": "navBarArrow",
+          "width": 14,
+          "height": 14,
+          "iconFontName": "arrow-right",
+          "iconFontFamily": "lucide",
+          "fill": "#3B82F6"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "AjUu7",
+      "x": 3010,
+      "y": -70,
+      "name": "Origin→Ekr8",
+      "width": 390,
+      "fill": "#0A1628",
+      "cornerRadius": 8,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#3B82F640"
+      },
+      "gap": 8,
+      "padding": [
+        7,
+        12
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "OHyO6",
+          "name": "lblAbove8Ico",
+          "width": 13,
+          "height": 13,
+          "iconFontName": "corner-down-right",
+          "iconFontFamily": "lucide",
+          "fill": "#3B82F6"
+        },
+        {
+          "type": "text",
+          "id": "ML13H",
+          "name": "lblAbove8Txt",
+          "fill": "#60A5FA",
+          "content": "← Открывается из Экрана 2: нажать «Мой кошелёк ⌄»",
+          "fontFamily": "Inter",
+          "fontSize": 11,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "puQjv",
+      "x": 3440,
+      "y": -70,
+      "name": "Origin→Ekr9",
+      "width": 390,
+      "fill": "#0A1628",
+      "cornerRadius": 8,
+      "stroke": {
+        "align": "inside",
+        "thickness": 1,
+        "fill": "#3B82F640"
+      },
+      "gap": 8,
+      "padding": [
+        7,
+        12
+      ],
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "EqcFO",
+          "name": "lblAbove9Ico",
+          "width": 13,
+          "height": 13,
+          "iconFontName": "corner-down-right",
+          "iconFontFamily": "lucide",
+          "fill": "#3B82F6"
+        },
+        {
+          "type": "text",
+          "id": "eCRpf",
+          "name": "lblAbove9Txt",
+          "fill": "#60A5FA",
+          "content": "← Открывается из Экрана 8: нажать «+ Добавить кошелёк»",
+          "fontFamily": "Inter",
+          "fontSize": 11,
+          "fontWeight": "normal"
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "r76Ob",
+      "x": 3400,
+      "y": 762,
+      "name": "Arrow 8→9",
+      "width": 40,
+      "height": 40,
+      "fill": "#3B82F6",
+      "cornerRadius": 20,
+      "effect": {
+        "type": "shadow",
+        "shadowType": "outer",
+        "color": "#3B82F660",
+        "blur": 16
+      },
+      "justifyContent": "center",
+      "alignItems": "center",
+      "children": [
+        {
+          "type": "icon_font",
+          "id": "Bifc6",
+          "name": "conn89Ico",
+          "width": 20,
+          "height": 20,
+          "iconFontName": "arrow-right",
+          "iconFontFamily": "lucide",
+          "fill": "#FFFFFF"
         }
       ]
     }
