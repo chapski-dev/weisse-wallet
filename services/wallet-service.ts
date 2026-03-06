@@ -44,6 +44,11 @@ global.Buffer = global.Buffer || Buffer;
 const MNEMONIC_KEY = 'wallet_mnemonic';
 const WALLET_DATA_KEY = 'wallet_data';
 
+// Multi-wallet storage keys
+const WALLETS_LIST_KEY = 'wallets_list';
+const ACTIVE_WALLET_ID_KEY = 'active_wallet_id';
+const MNEMONIC_PREFIX = 'mnemonic_';
+
 class WalletService {
   private mnemonic: string | null = null;
 
@@ -70,17 +75,22 @@ class WalletService {
     this.mnemonic = mnemonic;
   }
 
-  // Загрузка seed фразы из хранилища
+  // Загрузка seed фразы из хранилища (активного кошелька)
   async loadMnemonic(): Promise<string | null> {
     if (this.mnemonic) return this.mnemonic;
+    const activeId = await this.getActiveWalletId();
+    if (activeId) {
+      this.mnemonic = await this.loadMnemonicForWallet(activeId);
+      if (this.mnemonic) return this.mnemonic;
+    }
+    // Fall back to legacy key
     this.mnemonic = await secureStorage.getItemAsync(MNEMONIC_KEY);
     return this.mnemonic;
   }
 
   // Проверка наличия кошелька
   async hasWallet(): Promise<boolean> {
-    const mnemonic = await secureStorage.getItemAsync(MNEMONIC_KEY);
-    return mnemonic !== null;
+    return this.hasAnyWallet();
   }
 
   // Удаление кошелька
@@ -357,13 +367,112 @@ class WalletService {
   // Сохранение данных кошелька
   async saveWalletData(wallet: MasterWallet): Promise<void> {
     await secureStorage.setItemAsync(WALLET_DATA_KEY, JSON.stringify(wallet));
+    await this.updateWalletInList(wallet);
   }
 
-  // Загрузка данных кошелька
+  // Загрузка данных кошелька (активный кошелёк)
   async loadWalletData(): Promise<MasterWallet | null> {
+    // Try new format first
+    const activeId = await this.getActiveWalletId();
+    if (activeId) {
+      const wallets = await this.loadWalletsList();
+      return wallets.find((w) => w.id === activeId) ?? null;
+    }
+    // Fall back to legacy key
     const data = await secureStorage.getItemAsync(WALLET_DATA_KEY);
     if (!data) return null;
     return JSON.parse(data);
+  }
+
+  // ─── Multi-wallet ──────────────────────────────────────────────────────────
+
+  async loadWalletsList(): Promise<MasterWallet[]> {
+    const data = await secureStorage.getItemAsync(WALLETS_LIST_KEY);
+    if (!data) return [];
+    return JSON.parse(data);
+  }
+
+  async saveWalletsList(wallets: MasterWallet[]): Promise<void> {
+    await secureStorage.setItemAsync(WALLETS_LIST_KEY, JSON.stringify(wallets));
+  }
+
+  async saveMnemonicForWallet(walletId: string, mnemonic: string): Promise<void> {
+    await secureStorage.setItemAsync(`${MNEMONIC_PREFIX}${walletId}`, mnemonic);
+  }
+
+  async loadMnemonicForWallet(walletId: string): Promise<string | null> {
+    return secureStorage.getItemAsync(`${MNEMONIC_PREFIX}${walletId}`);
+  }
+
+  async getActiveWalletId(): Promise<string | null> {
+    return secureStorage.getItemAsync(ACTIVE_WALLET_ID_KEY);
+  }
+
+  async setActiveWalletId(walletId: string): Promise<void> {
+    await secureStorage.setItemAsync(ACTIVE_WALLET_ID_KEY, walletId);
+    this.mnemonic = null;
+  }
+
+  async addWallet(wallet: MasterWallet, mnemonic: string): Promise<void> {
+    const wallets = await this.loadWalletsList();
+    wallets.push(wallet);
+    await this.saveWalletsList(wallets);
+    await this.saveMnemonicForWallet(wallet.id, mnemonic);
+    await this.setActiveWalletId(wallet.id);
+    this.mnemonic = mnemonic;
+  }
+
+  async updateWalletInList(wallet: MasterWallet): Promise<void> {
+    const wallets = await this.loadWalletsList();
+    const idx = wallets.findIndex((w) => w.id === wallet.id);
+    if (idx >= 0) {
+      wallets[idx] = wallet;
+      await this.saveWalletsList(wallets);
+    }
+  }
+
+  async deleteWalletById(walletId: string): Promise<MasterWallet | null> {
+    const wallets = await this.loadWalletsList();
+    const remaining = wallets.filter((w) => w.id !== walletId);
+    await this.saveWalletsList(remaining);
+    await secureStorage.deleteItemAsync(`${MNEMONIC_PREFIX}${walletId}`);
+    this.mnemonic = null;
+
+    const activeId = await this.getActiveWalletId();
+    if (activeId === walletId) {
+      if (remaining.length > 0) {
+        await this.setActiveWalletId(remaining[0].id);
+        return remaining[0];
+      }
+      await secureStorage.deleteItemAsync(ACTIVE_WALLET_ID_KEY);
+      return null;
+    }
+    return wallets.find((w) => w.id === activeId) ?? null;
+  }
+
+  async hasAnyWallet(): Promise<boolean> {
+    const wallets = await this.loadWalletsList();
+    if (wallets.length > 0) return true;
+    const old = await secureStorage.getItemAsync(MNEMONIC_KEY);
+    return old !== null;
+  }
+
+  // Миграция старого формата (single wallet) в новый (multi-wallet list)
+  async migrateIfNeeded(): Promise<void> {
+    const wallets = await this.loadWalletsList();
+    if (wallets.length > 0) return;
+
+    const oldMnemonic = await secureStorage.getItemAsync(MNEMONIC_KEY);
+    if (!oldMnemonic) return;
+
+    const data = await secureStorage.getItemAsync(WALLET_DATA_KEY);
+    if (!data) return;
+
+    const oldWallet: MasterWallet = JSON.parse(data);
+    await this.saveWalletsList([oldWallet]);
+    await this.saveMnemonicForWallet(oldWallet.id, oldMnemonic);
+    await this.setActiveWalletId(oldWallet.id);
+    this.mnemonic = oldMnemonic;
   }
 }
 

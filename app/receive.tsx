@@ -1,19 +1,17 @@
-import { NETWORKS } from '@/constants/networks';
-import { useWallet } from '@/providers/wallet-provider';
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import {
-  Alert,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Share, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+import { Text } from '@/components/ui/builders/Text';
+import { NETWORKS } from '@/constants/networks';
+import { useWallet } from '@/providers/wallet-provider';
+import { useAppTheme } from '@/theme/theme';
 
 export default function ReceiveScreen() {
   const router = useRouter();
+  const { colors, insets } = useAppTheme();
   const { selectedNetwork, getCurrentAccount } = useWallet();
 
   const account = getCurrentAccount();
@@ -21,8 +19,8 @@ export default function ReceiveScreen() {
 
   if (!account) {
     return (
-      <View style={styles.container}>
-        <Text>Аккаунт не найден</Text>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <Text variant="p3" colorName="label">Аккаунт не найден</Text>
       </View>
     );
   }
@@ -34,63 +32,68 @@ export default function ReceiveScreen() {
 
   const shareAddress = async () => {
     try {
-      await Share.share({
-        message: `Мой ${network.name} адрес: ${account.address}`,
-      });
-    } catch (error) {
-      console.error('Share error:', error);
-    }
+      await Share.share({ message: `Мой ${network.name} адрес: ${account.address}` });
+    } catch {}
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Назад</Text>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          <Text variant="p2" color={colors.primary}>Назад</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Получить {network.symbol}</Text>
+        <Text variant="h5" color="#fff">Получить {network.symbol}</Text>
         <View style={{ width: 60 }} />
       </View>
 
-      <View style={styles.content}>
+      {/* Network badge */}
+      <View style={styles.centerRow}>
         <View style={styles.networkBadge}>
-          <Text style={styles.networkIcon}>{network?.icon}</Text>
-          <Text style={styles.networkName}>{network.name}</Text>
+          <Text fontSize={16} color="#4B8EF5">{network.icon}</Text>
+          <Text variant="p3-semibold" color="#fff">{network.name}</Text>
         </View>
+      </View>
 
-        {/* Здесь можно добавить QR код */}
-        <View style={styles.qrPlaceholder}>
-          <Text style={styles.qrText}>📱</Text>
-          <Text style={styles.qrLabel}>QR код</Text>
+      {/* QR container */}
+      <View style={styles.qrWrap}>
+        <View style={styles.qrBox}>
+          <Ionicons name="qr-code" size={140} color="#161B22" />
+          <Text variant="p4" color="#6B7280" mt={8}>QR код</Text>
         </View>
+      </View>
 
-        <Text style={styles.addressLabel}>Ваш адрес:</Text>
-        <View style={styles.addressBox}>
-          <Text style={styles.address} selectable>
+      {/* Address */}
+      <View style={styles.content}>
+        <Text variant="p4-semibold" color="#6B7280" mb={8}>Ваш адрес:</Text>
+        <TouchableOpacity style={styles.addressBox} onPress={copyAddress} activeOpacity={0.7}>
+          <Text variant="p4" color="#9CA3AF" style={styles.addressText} numberOfLines={1}>
             {account.address}
           </Text>
-        </View>
+          <Ionicons name="copy-outline" size={18} color={colors.primary} />
+        </TouchableOpacity>
 
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={copyAddress}>
-            <Text style={styles.actionIcon}>📋</Text>
-            <Text style={styles.actionText}>Копировать</Text>
+        {/* Action buttons */}
+        <View style={styles.actionsRow}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: colors.primary }]} onPress={copyAddress}>
+            <Ionicons name="copy-outline" size={18} color="#fff" />
+            <Text variant="p3-semibold" color="#fff">Копировать</Text>
           </TouchableOpacity>
-
           <TouchableOpacity
-            style={[styles.actionButton, styles.shareButton]}
+            style={[styles.actionBtn, { backgroundColor: '#161B22', borderWidth: 1, borderColor: '#30363D' }]}
             onPress={shareAddress}
           >
-            <Text style={styles.actionIcon}>📤</Text>
-            <Text style={styles.actionText}>Поделиться</Text>
+            <Ionicons name="share-outline" size={18} color="#9CA3AF" />
+            <Text variant="p3-semibold" color="#9CA3AF">Поделиться</Text>
           </TouchableOpacity>
         </View>
 
+        {/* Warning */}
         <View style={styles.warningBox}>
-          <Text style={styles.warningText}>
-            ⚠️ Отправляйте на этот адрес только {network.symbol} в сети{' '}
-            {network.name}. Отправка других токенов может привести к потере
-            средств.
+          <Ionicons name="warning" size={16} color="#F59E0B" />
+          <Text variant="p4" color="#D97706" style={{ flex: 1, lineHeight: 18 }}>
+            Отправляйте только {network.symbol} в сети {network.name}. Отправка других токенов может привести к потере средств.
           </Text>
         </View>
       </View>
@@ -99,118 +102,76 @@ export default function ReceiveScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  screen: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
-  backButton: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  content: {
-    padding: 24,
-    alignItems: 'center',
-  },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 60 },
+  centerRow: { flexDirection: 'row', justifyContent: 'center' },
   networkBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    gap: 8,
+    backgroundColor: '#161B22',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#30363D',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 24,
+    marginVertical: 12,
   },
-  networkIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  networkName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  qrPlaceholder: {
+  qrWrap: { alignItems: 'center', marginBottom: 24 },
+  qrBox: {
     width: 200,
     height: 200,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 16,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 20,
     alignItems: 'center',
-    marginBottom: 24,
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.25,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 10,
   },
-  qrText: {
-    fontSize: 60,
-  },
-  qrLabel: {
-    marginTop: 8,
-    color: '#666',
-  },
-  addressLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
-  },
+  content: { paddingHorizontal: 20 },
   addressBox: {
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-    borderRadius: 12,
-    width: '100%',
-  },
-  address: {
-    fontSize: 14,
-    fontFamily: 'monospace',
-    textAlign: 'center',
-    color: '#333',
-  },
-  actions: {
     flexDirection: 'row',
-    marginTop: 24,
-    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 60,
+    backgroundColor: '#161B22',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    gap: 12,
   },
-  actionButton: {
+  addressText: { flex: 1 },
+  actionsRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  actionBtn: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  shareButton: {
-    backgroundColor: '#34C759',
-    marginRight: 0,
-    marginLeft: 8,
-  },
-  actionIcon: {
-    fontSize: 18,
-    marginRight: 8,
-  },
-  actionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    gap: 8,
+    height: 52,
+    borderRadius: 14,
   },
   warningBox: {
-    backgroundColor: '#FFF3CD',
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: '#1C1405',
     borderRadius: 12,
-    marginTop: 24,
-    width: '100%',
-  },
-  warningText: {
-    fontSize: 14,
-    color: '#856404',
-    lineHeight: 20,
+    borderWidth: 1,
+    borderColor: '#78350F',
+    padding: 12,
   },
 });

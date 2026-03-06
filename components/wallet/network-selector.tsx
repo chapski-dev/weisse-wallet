@@ -1,8 +1,13 @@
+import React from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+import { Text } from '@/components/ui/builders/Text';
 import { getNetworksByMode } from '@/constants/networks';
 import { useWallet } from '@/providers/wallet-provider';
-import { Network } from '@/types/wallet';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAppTheme } from '@/theme/theme';
+import { Network, NetworkMode } from '@/types/wallet';
+
+// ─── Horizontal chip selector ─────────────────────────────────────────────────
 
 interface NetworkSelectorProps {
   selectedNetwork: Network;
@@ -10,138 +15,114 @@ interface NetworkSelectorProps {
 }
 
 export function NetworkSelector({ selectedNetwork, onSelectNetwork }: NetworkSelectorProps) {
+  const { colors } = useAppTheme();
   const { networkMode } = useWallet();
   const networks = getNetworksByMode(networkMode);
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.container}>
-      {networks.map((network) => (
-        <TouchableOpacity
-          key={network.id}
-          style={[
-            styles.networkItem,
-            selectedNetwork === network.id && styles.networkItemSelected,
-          ]}
-          onPress={() => onSelectNetwork(network.id)}
-        >
-          <Text style={styles.networkIcon}>{network.icon}</Text>
-          <Text
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.container}
+      contentContainerStyle={styles.content}
+    >
+      {networks.map((network) => {
+        const isSelected = selectedNetwork === network.id;
+        return (
+          <TouchableOpacity
+            key={network.id}
             style={[
-              styles.networkName,
-              selectedNetwork === network.id && styles.networkNameSelected,
+              styles.chip,
+              { backgroundColor: isSelected ? colors.primary : colors.grey_200 },
             ]}
+            onPress={() => onSelectNetwork(network.id)}
           >
-            {network.name}
-          </Text>
-        </TouchableOpacity>
-      ))}
+            <Text style={styles.chipIcon}>{network.icon}</Text>
+            <Text variant="p4-semibold" color={isSelected ? '#fff' : colors.label}>
+              {network.name}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </ScrollView>
   );
 }
 
+// ─── Vertical list (settings / modal) ────────────────────────────────────────
+
 interface NetworkListProps {
   selectedNetwork: Network;
   onSelectNetwork: (network: Network) => void;
+  mode?: NetworkMode;
 }
 
-export function NetworkList({ selectedNetwork, onSelectNetwork }: NetworkListProps) {
-  const { networkMode } = useWallet();
-  const networks = getNetworksByMode(networkMode);
+export function NetworkList({ selectedNetwork, onSelectNetwork, mode = 'mainnet' }: NetworkListProps) {
+  const { colors } = useAppTheme();
+  const networks = getNetworksByMode(mode);
 
   return (
-    <View style={styles.listContainer}>
-      {networks.map((network) => (
-        <TouchableOpacity
-          key={network.id}
-          style={[
-            styles.listItem,
-            selectedNetwork === network.id && styles.listItemSelected,
-          ]}
-          onPress={() => onSelectNetwork(network.id)}
-        >
-          <View style={styles.listItemLeft}>
-            <Text style={styles.listIcon}>{network?.icon}</Text>
-            <View>
-              <Text style={styles.listName}>{network.name}</Text>
-              <Text style={styles.listSymbol}>{network.symbol}</Text>
+    <View>
+      {networks.map((network) => {
+        const isSelected = selectedNetwork === network.id;
+        return (
+          <TouchableOpacity
+            key={network.id}
+            style={[
+              styles.listItem,
+              {
+                backgroundColor: isSelected ? colors.primary_700_15 : 'transparent',
+                borderColor: isSelected ? colors.primary : 'transparent',
+                borderWidth: 1,
+              },
+            ]}
+            onPress={() => onSelectNetwork(network.id)}
+          >
+            <View style={styles.listLeft}>
+              <View style={[styles.iconBg, { backgroundColor: colors.grey_200 }]}>
+                <Text style={styles.chipIcon}>{network.icon}</Text>
+              </View>
+              <View style={{ gap: 2 }}>
+                <Text variant="p3-semibold">{network.name}</Text>
+                <Text variant="p4" colorName="label">{network.symbol}</Text>
+              </View>
             </View>
-          </View>
-          {selectedNetwork === network.id && (
-            <Text style={styles.checkmark}>✓</Text>
-          )}
-        </TouchableOpacity>
-      ))}
+            {isSelected && (
+              <Text variant="p2-semibold" color={colors.primary}>✓</Text>
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 8,
-  },
-  networkItem: {
+  container: { paddingVertical: 8 },
+  content: { paddingHorizontal: 20, gap: 8 },
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginHorizontal: 4,
-    borderRadius: 12,
-    backgroundColor: '#F5F5F5',
-    minWidth: 80,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  networkItemSelected: {
-    backgroundColor: '#007AFF',
-  },
-  networkIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  networkName: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '500',
-  },
-  networkNameSelected: {
-    color: 'white',
-  },
-  // List styles
-  listContainer: {
-    padding: 16,
-  },
+  chipIcon: { fontSize: 14 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderRadius: 12,
-    marginBottom: 8,
+    marginBottom: 4,
   },
-  listItemSelected: {
-    backgroundColor: '#E8F4FF',
-    borderWidth: 2,
-    borderColor: '#007AFF',
-  },
-  listItemLeft: {
-    flexDirection: 'row',
+  listLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  iconBg: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
-  },
-  listIcon: {
-    fontSize: 28,
-    marginRight: 12,
-  },
-  listName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  listSymbol: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  checkmark: {
-    fontSize: 20,
-    color: '#007AFF',
-    fontWeight: '600',
+    justifyContent: 'center',
   },
 });

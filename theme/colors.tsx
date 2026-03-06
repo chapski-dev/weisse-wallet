@@ -3,8 +3,8 @@
 // Общая базовая палитра (не зависит от темы)
 export const BaseColors = {
   // Основные цвета
-  primary: '#008C92',
-  primary_700_15: '#008C9226',
+  primary: '#3B82F6',
+  primary_700_15: '#3B82F626',
   green: '#34C759',
   green_500_15: '#34C75926',
   error_500: '#E73054',
@@ -71,27 +71,26 @@ export const lightColors = {
 
 export const darkColors = {
   ...BaseColors,
-  
-  // Переопределение серой палитры для темной темы
-  // Мягкие переходы, комфортные для глаз
-  grey_50: '#1E1E1E', // Мягкий темный для карточек
-  grey_100: '#1E1E1E', // Контейнеры
-  grey_200: '#3A3A3A', // Границы и разделители
-  grey_300: '#484848', // Неактивные элементы
-  grey_400: '#636363', // Вторичный текст
-  grey_500: '#8E8E8E', // Средний текст
-  grey_600: '#AEAEAE', // Основной текст
-  grey_700: '#C7C7C7', // Заголовки
-  grey_800: '#E5E5E5', // Самый светлый текст
-  
-  // Семантические цвета для темной темы - мягкие и комфортные
-  card: '#1E1E1E', // Мягкий темно-серый, как в iOS
-  background: '#141414', // Комфортный темный фон, не черный
-  text: BaseColors.white_90, // Мягкий светлый текст, не ослепляющий
-  border: '#3A3A3A', // Деликатные границы
-  label: '#8E8E8E', // Спокойный серый для меток
-  disabled: '#484848', // Мягко показывает неактивность
-  success_500: BaseColors.green, // Более мягкий зеленый
+
+  // Серая палитра — от темнейшего к светлому
+  grey_50: '#0D1117',   // surface deepest
+  grey_100: '#161B22',  // card bg
+  grey_200: '#1F2937',  // button / input bg
+  grey_300: '#30363D',  // borders / dividers
+  grey_400: '#6B7280',  // muted text
+  grey_500: '#9CA3AF',  // secondary text
+  grey_600: '#D1D5DB',  // label text
+  grey_700: '#E5E7EB',  // body text
+  grey_800: '#F9FAFB',  // primary text
+
+  // Семантические цвета
+  card: '#161B22',
+  background: '#0A0F1E',
+  text: '#F9FAFB',
+  border: '#30363D',
+  label: '#9CA3AF',
+  disabled: '#30363D',
+  success_500: BaseColors.green,
   success_500_15: BaseColors.green_500_15,
-  promting: '#8E8E8E', // Ненавязчивый для подсказок
+  promting: '#6B7280',
 } as const;

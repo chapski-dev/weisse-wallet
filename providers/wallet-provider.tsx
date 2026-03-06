@@ -12,6 +12,7 @@ export interface WalletContextState {
   isLoading: boolean;
   isInitialized: boolean;
   wallet: MasterWallet | null;
+  wallets: MasterWallet[];
   mnemonic: string | null;
   selectedNetwork: Network;
   networkMode: NetworkMode;
@@ -23,6 +24,8 @@ export interface WalletContextState {
   generateNewMnemonic: () => string;
   createWallet: (seedPhrase: string, name?: string) => Promise<MasterWallet>;
   importWallet: (seedPhrase: string, name?: string) => Promise<MasterWallet>;
+  switchWallet: (walletId: string) => Promise<void>;
+  renameWallet: (walletId: string, name: string) => Promise<void>;
   refreshBalances: () => Promise<void>;
   getCurrentAccount: () => WalletAccount | undefined;
   getAccountsForCurrentMode: () => WalletAccount[];
@@ -38,6 +41,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [wallet, setWallet] = useState<MasterWallet | null>(null);
+  const [wallets, setWallets] = useState<MasterWallet[]>([]);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<Network>(Network.ETHEREUM);
   const [networkMode, setNetworkModeState] = useState<NetworkMode>('mainnet');
@@ -87,25 +91,28 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const checkWallet = useCallback(async () => {
     setIsLoading(true);
     try {
-      const hasWallet = await walletService.hasWallet();
-      if (hasWallet) {
-        const walletData = await walletService.loadWalletData();
-        if (walletData) {
-          // Миграция: добавляем аккаунты для сетей, добавленных после создания кошелька
-          const existingNetworks = new Set(walletData.accounts.map((a) => a.network));
-          const missingEVMNetworks = Object.values(NETWORKS).filter(
-            (n) => n.isEVM && !existingNetworks.has(n.id)
-          );
-          if (missingEVMNetworks.length > 0) {
-            const evmWallet = await walletService.getEVMWallet(Network.ETHEREUM);
-            for (const network of missingEVMNetworks) {
-              walletData.accounts.push({ network: network.id, address: evmWallet.address, balance: '0' });
-            }
-            await walletService.saveWalletData(walletData);
+      await walletService.migrateIfNeeded();
+      const walletsList = await walletService.loadWalletsList();
+      if (walletsList.length > 0) {
+        setWallets(walletsList);
+        const activeId = await walletService.getActiveWalletId();
+        const activeWallet = walletsList.find((w) => w.id === activeId) ?? walletsList[0];
+        if (!activeId) await walletService.setActiveWalletId(activeWallet.id);
+
+        // Add accounts for networks added after wallet creation
+        const existingNetworks = new Set(activeWallet.accounts.map((a) => a.network));
+        const missingEVMNetworks = Object.values(NETWORKS).filter(
+          (n) => n.isEVM && !existingNetworks.has(n.id)
+        );
+        if (missingEVMNetworks.length > 0) {
+          const evmWallet = await walletService.getEVMWallet(Network.ETHEREUM);
+          for (const network of missingEVMNetworks) {
+            activeWallet.accounts.push({ network: network.id, address: evmWallet.address, balance: '0' });
           }
-          setWallet(walletData);
-          setIsInitialized(true);
+          await walletService.updateWalletInList(activeWallet);
         }
+        setWallet(activeWallet);
+        setIsInitialized(true);
       }
     } catch (error) {
       console.error('Failed to check wallet:', error);
@@ -122,7 +129,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Создание кошелька из seed фразы
-  const createWallet = useCallback(async (seedPhrase: string, name: string = 'Main Wallet') => {
+  const createWallet = useCallback(async (seedPhrase: string, name: string = 'Мой кошелек') => {
     setIsLoading(true);
     try {
       if (!walletService.validateMnemonic(seedPhrase)) {
@@ -139,8 +146,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         accounts,
       };
 
-      await walletService.saveWalletData(newWallet);
+      await walletService.addWallet(newWallet, seedPhrase);
 
+      setWallets((prev) => [...prev, newWallet]);
       setWallet(newWallet);
       setMnemonic(seedPhrase);
       setIsInitialized(true);
@@ -207,21 +215,47 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return wallet.accounts.filter(a => currentNetworkIds.has(a.network));
   }, [wallet, networkMode]);
 
+  // Переключение активного кошелька
+  const switchWallet = useCallback(async (walletId: string) => {
+    const target = wallets.find((w) => w.id === walletId);
+    if (!target) return;
+    await walletService.setActiveWalletId(walletId);
+    setWallet(target);
+    setMnemonic(null);
+  }, [wallets]);
+
+  // Переименование кошелька
+  const renameWallet = useCallback(async (walletId: string, name: string) => {
+    const target = wallets.find((w) => w.id === walletId);
+    if (!target) return;
+    const updated = { ...target, name };
+    await walletService.updateWalletInList(updated);
+    setWallets((prev) => prev.map((w) => (w.id === walletId ? updated : w)));
+    if (wallet?.id === walletId) setWallet(updated);
+  }, [wallet, wallets]);
+
   // Удаление кошелька
   const deleteWallet = useCallback(async () => {
+    if (!wallet) return;
     setIsLoading(true);
     try {
-      await walletService.deleteWallet();
-      setWallet(null);
-      setMnemonic(null);
-      setIsInitialized(false);
+      const nextWallet = await walletService.deleteWalletById(wallet.id);
+      const remaining = wallets.filter((w) => w.id !== wallet.id);
+      setWallets(remaining);
+      if (nextWallet) {
+        setWallet(nextWallet);
+      } else {
+        setWallet(null);
+        setMnemonic(null);
+        setIsInitialized(false);
+      }
     } catch (error) {
       console.error('Failed to delete wallet:', error);
       throw error;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [wallet, wallets]);
 
   // Получение seed фразы
   const revealMnemonic = useCallback(async (): Promise<string | null> => {
@@ -233,6 +267,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       isLoading,
       isInitialized,
       wallet,
+      wallets,
       mnemonic,
       selectedNetwork,
       networkMode,
@@ -242,6 +277,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       generateNewMnemonic,
       createWallet,
       importWallet,
+      switchWallet,
+      renameWallet,
       refreshBalances,
       getCurrentAccount,
       getAccountsForCurrentMode,
@@ -254,6 +291,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       isLoading,
       isInitialized,
       wallet,
+      wallets,
       mnemonic,
       selectedNetwork,
       networkMode,
@@ -262,6 +300,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       generateNewMnemonic,
       createWallet,
       importWallet,
+      switchWallet,
+      renameWallet,
       refreshBalances,
       getCurrentAccount,
       getAccountsForCurrentMode,

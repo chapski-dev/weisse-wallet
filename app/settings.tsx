@@ -1,20 +1,17 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+import { Text } from '@/components/ui/builders/Text';
 import { NetworkModeToggle } from '@/components/ui/network-mode-toggle';
 import { SeedPhraseDisplay } from '@/components/wallet/seed-phrase-display';
 import { useWallet } from '@/providers/wallet-provider';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
-import {
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { useAppTheme } from '@/theme/theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { colors, insets } = useAppTheme();
   const { wallet, deleteWallet, revealMnemonic } = useWallet();
   const [showSeedPhrase, setShowSeedPhrase] = useState(false);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
@@ -22,31 +19,15 @@ export default function SettingsScreen() {
   const handleRevealSeedPhrase = async () => {
     const showSeed = async () => {
       const phrase = await revealMnemonic();
-      if (phrase) {
-        setMnemonic(phrase);
-        setShowSeedPhrase(true);
-      }
+      if (phrase) { setMnemonic(phrase); setShowSeedPhrase(true); }
     };
-
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        'Внимание!\n\nВы собираетесь показать seed фразу. Убедитесь, что никто не видит ваш экран.'
-      );
-      if (confirmed) {
-        await showSeed();
-      }
+      if (window.confirm('Вы собираетесь показать seed фразу. Убедитесь, что никто не видит ваш экран.')) await showSeed();
     } else {
-      Alert.alert(
-        'Внимание!',
-        'Вы собираетесь показать seed фразу. Убедитесь, что никто не видит ваш экран.',
-        [
-          { text: 'Отмена', style: 'cancel' },
-          {
-            text: 'Показать',
-            onPress: showSeed,
-          },
-        ]
-      );
+      Alert.alert('Внимание!', 'Вы собираетесь показать seed фразу. Убедитесь, что никто не видит ваш экран.', [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Показать', onPress: showSeed },
+      ]);
     }
   };
 
@@ -56,285 +37,171 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteWallet = () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        '⚠️ Удалить кошелек?\n\nЭто действие необратимо! Убедитесь, что у вас есть резервная копия seed фразы.'
-      );
-      if (confirmed) {
-        confirmDelete();
-      }
-    } else {
-      Alert.alert(
-        '⚠️ Удалить кошелек?',
-        'Это действие необратимо! Убедитесь, что у вас есть резервная копия seed фразы.',
-        [
-          { text: 'Отмена', style: 'cancel' },
-          {
-            text: 'Удалить',
-            style: 'destructive',
-            onPress: confirmDelete,
-          },
-        ]
-      );
-    }
-  };
-
-  const confirmDelete = () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        'Последнее предупреждение\n\nВы точно хотите удалить кошелек? Без seed фразы восстановление невозможно!'
-      );
-      if (confirmed) {
-        performDelete();
-      }
-    } else {
-      Alert.alert(
-        'Последнее предупреждение',
-        'Вы точно хотите удалить кошелек? Без seed фразы восстановление невозможно!',
-        [
+    const warn2 = () => {
+      if (Platform.OS === 'web') {
+        if (window.confirm('Последнее предупреждение\n\nВы точно хотите удалить кошелек?')) performDelete();
+      } else {
+        Alert.alert('Последнее предупреждение', 'Вы точно хотите удалить кошелек? Без seed фразы восстановление невозможно!', [
           { text: 'Нет, оставить', style: 'cancel' },
-          {
-            text: 'Да, удалить',
-            style: 'destructive',
-            onPress: performDelete,
-          },
-        ]
-      );
+          { text: 'Да, удалить', style: 'destructive', onPress: performDelete },
+        ]);
+      }
+    };
+    if (Platform.OS === 'web') {
+      if (window.confirm('⚠️ Удалить кошелек?\n\nЭто действие необратимо!')) warn2();
+    } else {
+      Alert.alert('⚠️ Удалить кошелек?', 'Это действие необратимо! Убедитесь, что у вас есть резервная копия seed фразы.', [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Удалить', style: 'destructive', onPress: warn2 },
+      ]);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Назад</Text>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+    >
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          <Text variant="p2" color={colors.primary}>Назад</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Настройки</Text>
+        <Text variant="h5" color="#fff">Настройки</Text>
         <View style={{ width: 60 }} />
       </View>
 
       <View style={styles.content}>
-        {/* Информация о кошельке */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Кошелек</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Название</Text>
-            <Text style={styles.infoValue}>{wallet?.name}</Text>
+        {/* Wallet info */}
+        <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>КОШЕЛЁК</Text>
+        <View style={[styles.card, { borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Text variant="p3" color="#9CA3AF">Название</Text>
+            <Text variant="p3-semibold" color="#fff">{wallet?.name ?? '—'}</Text>
           </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Создан</Text>
-            <Text style={styles.infoValue}>
-              {wallet?.createdAt
-                ? new Date(wallet.createdAt).toLocaleDateString('ru-RU')
-                : '-'}
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.row}>
+            <Text variant="p3" color="#9CA3AF">Создан</Text>
+            <Text variant="p3-semibold" color="#fff">
+              {wallet?.createdAt ? new Date(wallet.createdAt).toLocaleDateString('ru-RU') : '—'}
             </Text>
           </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Сетей</Text>
-            <Text style={styles.infoValue}>{wallet?.accounts.length || 0}</Text>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.row}>
+            <Text variant="p3" color="#9CA3AF">Сетей</Text>
+            <Text variant="p3-semibold" color="#fff">{wallet?.accounts.length ?? 0}</Text>
           </View>
         </View>
 
-        {/* Сеть */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Сеть</Text>
-          <View style={styles.networkModeContainer}>
-            <View style={styles.networkModeInfo}>
-              <Text style={styles.actionTitle}>Режим сети</Text>
-              <Text style={styles.actionDescription}>
-                Переключение между mainnet и testnet
-              </Text>
-            </View>
-            <NetworkModeToggle />
-          </View>
-        </View>
+        {/* Network mode */}
+        <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>СЕТЬ</Text>
+        <NetworkModeToggle />
 
-        {/* Безопасность */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Безопасность</Text>
-
+        {/* Security */}
+        <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>БЕЗОПАСНОСТЬ</Text>
+        <View style={[styles.card, { borderColor: colors.border }]}>
           {!showSeedPhrase ? (
-            <TouchableOpacity
-              style={styles.actionItem}
-              onPress={handleRevealSeedPhrase}
-            >
-              <Text style={styles.actionIcon}>🔑</Text>
-              <View style={styles.actionContent}>
-                <Text style={styles.actionTitle}>Показать seed фразу</Text>
-                <Text style={styles.actionDescription}>
-                  Получить доступ к резервной фразе
-                </Text>
+            <TouchableOpacity style={styles.row} onPress={handleRevealSeedPhrase}>
+              <View style={[styles.iconBox, { backgroundColor: colors.primary_700_15 }]}>
+                <Ionicons name="key-outline" size={18} color={colors.primary} />
               </View>
-              <Text style={styles.actionArrow}>→</Text>
+              <View style={{ flex: 1 }}>
+                <Text variant="p3-semibold" color="#fff">Показать seed фразу</Text>
+                <Text variant="p4" color="#6B7280" mt={2}>Получить доступ к резервной фразе</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
             </TouchableOpacity>
           ) : (
-            <View style={styles.seedPhraseContainer}>
-              <SeedPhraseDisplay mnemonic={mnemonic || ''} />
+            <View>
+              <SeedPhraseDisplay mnemonic={mnemonic ?? ''} />
               <TouchableOpacity
-                style={styles.hideSeedButton}
-                onPress={() => {
-                  setShowSeedPhrase(false);
-                  setMnemonic(null);
-                }}
+                style={[styles.hideSeedBtn, { borderTopColor: colors.border }]}
+                onPress={() => { setShowSeedPhrase(false); setMnemonic(null); }}
               >
-                <Text style={styles.hideSeedButtonText}>Скрыть seed фразу</Text>
+                <Ionicons name="eye-off-outline" size={16} color="#6B7280" />
+                <Text variant="p4-semibold" color="#6B7280">Скрыть seed фразу</Text>
               </TouchableOpacity>
             </View>
           )}
         </View>
 
-        {/* О приложении */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>О приложении</Text>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Версия</Text>
-            <Text style={styles.infoValue}>1.0.0</Text>
+        {/* About */}
+        <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>О ПРИЛОЖЕНИИ</Text>
+        <View style={[styles.card, { borderColor: colors.border }]}>
+          <View style={styles.row}>
+            <Text variant="p3" color="#9CA3AF">Версия</Text>
+            <Text variant="p3-semibold" color="#fff">1.0.0</Text>
           </View>
-          <View style={styles.infoItem}>
-            <Text style={styles.infoLabel}>Название</Text>
-            <Text style={styles.infoValue}>Weiss Wallet</Text>
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
+          <View style={styles.row}>
+            <Text variant="p3" color="#9CA3AF">Приложение</Text>
+            <Text variant="p3-semibold" color="#fff">Weiss Wallet</Text>
           </View>
         </View>
 
-        {/* Опасная зона */}
-        <View style={[styles.section, styles.dangerSection]}>
-          <Text style={[styles.sectionTitle, styles.dangerTitle]}>
-            Опасная зона
-          </Text>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={handleDeleteWallet}
-          >
-            <Text style={styles.deleteButtonText}>🗑️ Удалить кошелек</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Danger zone */}
+        <Text variant="p4-semibold" color="#EF4444" style={styles.sectionLabel}>ОПАСНАЯ ЗОНА</Text>
+        <TouchableOpacity
+          style={[styles.card, styles.dangerCard, { borderColor: '#7F1D1D' }]}
+          onPress={handleDeleteWallet}
+        >
+          <View style={[styles.iconBox, { backgroundColor: '#450A0A' }]}>
+            <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text variant="p3-semibold" color="#EF4444">Удалить кошелек</Text>
+            <Text variant="p4" color="#7F1D1D" mt={2}>Необратимое действие</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color="#7F1D1D" />
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  screen: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
-  backButton: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  content: {
-    padding: 16,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    textTransform: 'uppercase',
-    marginBottom: 12,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  infoLabel: {
-    fontSize: 16,
-    color: '#333',
-  },
-  infoValue: {
-    fontSize: 16,
-    color: '#666',
-  },
-  actionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    padding: 16,
-    borderRadius: 12,
-  },
-  actionIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  actionContent: {
-    flex: 1,
-  },
-  actionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  actionDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  actionArrow: {
-    fontSize: 18,
-    color: '#999',
-  },
-  seedPhraseContainer: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 60 },
+  content: { paddingHorizontal: 20, paddingTop: 16 },
+  sectionLabel: { marginBottom: 8, marginTop: 8, letterSpacing: 0.5 },
+  card: {
+    backgroundColor: '#161B22',
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 20,
     overflow: 'hidden',
   },
-  hideSeedButton: {
-    backgroundColor: '#E0E0E0',
-    padding: 12,
-    alignItems: 'center',
-  },
-  hideSeedButtonText: {
-    color: '#666',
-    fontWeight: '600',
-  },
-  dangerSection: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#FFE0E0',
-  },
-  dangerTitle: {
-    color: '#D32F2F',
-  },
-  deleteButton: {
-    backgroundColor: '#FFEBEE',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FFCDD2',
-  },
-  deleteButtonText: {
-    color: '#D32F2F',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  networkModeContainer: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
-    padding: 12,
-    paddingLeft: 16,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
   },
-  networkModeInfo: {
-    flex: 1,
+  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  hideSeedBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  dangerCard: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
 });

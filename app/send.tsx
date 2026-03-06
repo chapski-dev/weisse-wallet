@@ -1,25 +1,27 @@
-import { NETWORKS } from '@/constants/networks';
-import { useWallet } from '@/providers/wallet-provider';
-import { walletService } from '@/services/wallet-service';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
+import { Text } from '@/components/ui/builders/Text';
+import { NETWORKS } from '@/constants/networks';
+import { useWallet } from '@/providers/wallet-provider';
+import { walletService } from '@/services/wallet-service';
+import { useAppTheme } from '@/theme/theme';
+
 export default function SendScreen() {
   const router = useRouter();
+  const { colors, insets } = useAppTheme();
   const { selectedNetwork, getCurrentAccount, refreshBalances } = useWallet();
-
   const [recipient, setRecipient] = useState('');
   const [amount, setAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -29,45 +31,35 @@ export default function SendScreen() {
 
   if (!account) {
     return (
-      <View style={styles.container}>
-        <Text>Аккаунт не найден</Text>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <Text variant="p3" colorName="label">Аккаунт не найден</Text>
       </View>
     );
   }
 
   const isEVMNetwork = network.isEVM;
   const balance = parseFloat(account.balance);
+  const canSend = !!recipient && !!amount;
 
-  const validateAddress = (address: string): boolean => {
-    if (isEVMNetwork) {
-      // Простая валидация EVM адреса
-      return /^0x[a-fA-F0-9]{40}$/.test(address);
-    }
-    return address.length > 20; // Упрощенная проверка
+  const validateAddress = (address: string) => {
+    if (isEVMNetwork) return /^0x[a-fA-F0-9]{40}$/.test(address);
+    return address.length > 20;
   };
 
-  const handleSend = async () => {
-    if (!recipient || !amount) {
-      Alert.alert('Ошибка', 'Заполните все поля');
-      return;
-    }
-
+  const handleSend = () => {
     if (!validateAddress(recipient)) {
       Alert.alert('Ошибка', 'Неверный адрес получателя');
       return;
     }
-
     const amountNum = Number(amount);
-    if (isNaN(amountNum)) {
+    if (isNaN(amountNum) || amountNum <= 0) {
       Alert.alert('Ошибка', 'Введите корректную сумму');
       return;
     }
-
     if (amountNum > balance) {
       Alert.alert('Ошибка', 'Недостаточно средств');
       return;
     }
-
     Alert.alert(
       'Подтверждение',
       `Отправить ${amount} ${network.symbol} на адрес ${recipient.slice(0, 8)}...${recipient.slice(-6)}?`,
@@ -83,133 +75,128 @@ export default function SendScreen() {
       Alert.alert('Ошибка', 'Отправка пока поддерживается только для EVM сетей');
       return;
     }
-
     setIsSending(true);
     try {
-      const txHash = await walletService.sendEVMTransaction(
-        selectedNetwork,
-        recipient,
-        amount
-      );
-
-      Alert.alert(
-        'Успешно!',
-        `Транзакция отправлена\n\nHash: ${txHash.slice(0, 16)}...`,
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              refreshBalances();
-              router.back();
-            },
-          },
-        ]
-      );
+      const txHash = await walletService.sendEVMTransaction(selectedNetwork, recipient, amount);
+      Alert.alert('Успешно!', `Транзакция отправлена\nHash: ${txHash.slice(0, 16)}...`, [
+        { text: 'OK', onPress: () => { refreshBalances(); router.back(); } },
+      ]);
     } catch (error: any) {
-      Alert.alert('Ошибка', error.message || 'Не удалось отправить транзакцию');
+      Alert.alert('Ошибка', error.message || 'Не удалось отправить');
     } finally {
       setIsSending(false);
     }
   };
 
-  const setMaxAmount = () => {
-    // Оставляем немного на газ для EVM сетей
-    const maxAmount = isEVMNetwork ? Math.max(0, balance - 0.001) : balance;
-    setAmount(maxAmount.toString());
-  };
-
   if (isSending) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Отправка транзакции...</Text>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <View style={[styles.loaderCircle, { backgroundColor: colors.primary_700_15 }]}>
+          <Ionicons name="arrow-up" size={32} color={colors.primary} />
+        </View>
+        <Text variant="h4" center color="#fff" mt={20}>Отправка...</Text>
+        <Text variant="p3" colorName="label" center mt={8}>Транзакция обрабатывается</Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.screen, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backButton}>← Назад</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
+        {/* Header */}
+        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={20} color={colors.primary} />
+            <Text variant="p2" color={colors.primary}>Назад</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Отправить {network.symbol}</Text>
+          <Text variant="h5" color="#fff">Отправить {network.symbol}</Text>
           <View style={{ width: 60 }} />
         </View>
 
-        <View style={styles.content}>
+        {/* Network badge */}
+        <View style={styles.centerRow}>
           <View style={styles.networkBadge}>
-            <Text style={styles.networkIcon}>{network?.icon}</Text>
-            <Text style={styles.networkName}>{network.name}</Text>
+            <Text fontSize={16} color="#4B8EF5">{network.icon}</Text>
+            <Text variant="p3-semibold" color="#fff">{network.name}</Text>
           </View>
+        </View>
 
-          <View style={styles.balanceInfo}>
-            <Text style={styles.balanceLabel}>Доступно:</Text>
-            <Text style={styles.balanceValue}>
-              {balance.toFixed(6)} {network.symbol}
-            </Text>
-          </View>
+        {/* Available balance */}
+        <View style={[styles.centerRow, { marginBottom: 24 }]}>
+          <Text variant="p3" color="#6B7280">Доступно: </Text>
+          <Text variant="p3-semibold" color="#fff">{balance.toFixed(6)} {network.symbol}</Text>
+        </View>
 
-          {/* Адрес получателя */}
+        <View style={styles.content}>
+          {/* Recipient */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Адрес получателя</Text>
-            <TextInput
-              style={styles.input}
-              value={recipient}
-              onChangeText={setRecipient}
-              placeholder={isEVMNetwork ? '0x...' : 'Введите адрес'}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
+            <Text variant="p4-semibold" color="#9CA3AF" mb={8}>Адрес получателя</Text>
+            <View style={styles.inputField}>
+              <TextInput
+                style={styles.textInput}
+                value={recipient}
+                onChangeText={setRecipient}
+                placeholder={isEVMNetwork ? '0x...' : 'Введите адрес'}
+                placeholderTextColor="#4B5563"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              <Ionicons name="qr-code-outline" size={20} color="#6B7280" />
+            </View>
           </View>
 
-          {/* Сумма */}
+          {/* Amount */}
           <View style={styles.inputGroup}>
-            <View style={styles.inputLabelRow}>
-              <Text style={styles.inputLabel}>Сумма</Text>
-              <TouchableOpacity onPress={setMaxAmount}>
-                <Text style={styles.maxButton}>MAX</Text>
+            <View style={styles.amtHeader}>
+              <Text variant="p4-semibold" color="#9CA3AF">Сумма</Text>
+              <TouchableOpacity
+                style={styles.maxBtn}
+                onPress={() => setAmount(String(isEVMNetwork ? Math.max(0, balance - 0.001) : balance))}
+              >
+                <Text fontSize={12} fontWeight="700" color={colors.primary}>MAX</Text>
               </TouchableOpacity>
             </View>
-            <View style={styles.amountInputContainer}>
+            <View style={styles.amtField}>
               <TextInput
-                style={styles.amountInput}
+                style={styles.amtInput}
                 value={amount}
-                onChangeText={(text) => setAmount(text.replace(",","."))}
+                onChangeText={(t) => setAmount(t.replace(',', '.'))}
                 placeholder="0.0"
+                placeholderTextColor="#4B5563"
                 keyboardType="decimal-pad"
               />
-              <Text style={styles.amountSymbol}>{network.symbol}</Text>
+              <View style={styles.symBox}>
+                <Text variant="p3-semibold" color="#6B7280">{network.symbol}</Text>
+              </View>
             </View>
           </View>
 
-          {/* Информация о комиссии */}
+          {/* Fee */}
           {isEVMNetwork && (
-            <View style={styles.feeInfo}>
-              <Text style={styles.feeLabel}>Комиссия сети:</Text>
-              <Text style={styles.feeValue}>~ 0.0001 {network.symbol}</Text>
+            <View style={styles.feeRow}>
+              <Text variant="p3" color="#6B7280">Комиссия сети:</Text>
+              <Text variant="p3-semibold" color="#9CA3AF">~ 0.0001 {network.symbol}</Text>
             </View>
           )}
 
+          {/* Send button */}
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              (!recipient || !amount) && styles.sendButtonDisabled,
-            ]}
+            style={[styles.sendBtn, canSend && styles.sendBtnActive]}
             onPress={handleSend}
-            disabled={!recipient || !amount}
+            disabled={!canSend}
           >
-            <Text style={styles.sendButtonText}>Отправить</Text>
+            <Ionicons name="send" size={20} color={canSend ? '#fff' : '#6B7280'} />
+            <Text variant="p1-semibold" color={canSend ? '#fff' : '#6B7280'}>Отправить</Text>
           </TouchableOpacity>
 
           {!isEVMNetwork && (
             <View style={styles.warningBox}>
-              <Text style={styles.warningText}>
-                ⚠️ Отправка для {network.name} находится в разработке
+              <Ionicons name="warning" size={16} color="#F59E0B" />
+              <Text variant="p4" color="#D97706" style={{ flex: 1 }}>
+                Отправка для {network.name} находится в разработке
               </Text>
             </View>
           )}
@@ -220,159 +207,101 @@ export default function SendScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
+  screen: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  loaderCircle: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
-  backButton: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  content: {
-    padding: 24,
-  },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 60 },
+  centerRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   networkBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
+    gap: 8,
+    backgroundColor: '#161B22',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#30363D',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: 'center',
-    marginBottom: 16,
+    marginVertical: 12,
   },
-  networkIcon: {
-    fontSize: 20,
-    marginRight: 8,
-  },
-  networkName: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  balanceInfo: {
+  content: { paddingHorizontal: 20 },
+  inputGroup: { marginBottom: 20 },
+  inputField: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'baseline',
-    marginBottom: 32,
+    alignItems: 'center',
+    height: 52,
+    backgroundColor: '#161B22',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    paddingHorizontal: 16,
+    gap: 12,
   },
-  balanceLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 8,
-  },
-  balanceValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabelRow: {
+  textInput: { flex: 1, color: '#fff', fontSize: 15 },
+  amtHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
     marginBottom: 8,
   },
-  maxButton: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#007AFF',
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    fontFamily: 'monospace',
-  },
-  amountInputContainer: {
+  maxBtn: { backgroundColor: '#1E3A5F', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
+  amtField: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    paddingRight: 16,
+    height: 64,
+    backgroundColor: '#161B22',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#30363D',
+    overflow: 'hidden',
   },
-  amountInput: {
-    flex: 1,
-    padding: 16,
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  amountSymbol: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-  },
-  feeInfo: {
+  amtInput: { flex: 1, paddingHorizontal: 16, color: '#fff', fontSize: 28, fontWeight: '600' },
+  symBox: { width: 64, height: '100%', justifyContent: 'center', alignItems: 'center' },
+  feeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#F5F5F5',
-    padding: 16,
+    alignItems: 'center',
+    backgroundColor: '#0D1117',
     borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 48,
     marginBottom: 24,
   },
-  feeLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  feeValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  sendButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
-    borderRadius: 12,
+  sendBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#1F2937',
+    borderWidth: 1,
+    borderColor: '#374151',
   },
-  sendButtonDisabled: {
-    backgroundColor: '#CCC',
-  },
-  sendButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
+  sendBtnActive: {
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+    shadowColor: '#3B82F6',
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 8,
   },
   warningBox: {
-    backgroundColor: '#FFF3CD',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 16,
-  },
-  warningText: {
-    fontSize: 14,
-    color: '#856404',
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    fontSize: 18,
+    gap: 8,
+    backgroundColor: '#1C1405',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#78350F',
+    padding: 12,
     marginTop: 16,
-    color: '#333',
   },
 });

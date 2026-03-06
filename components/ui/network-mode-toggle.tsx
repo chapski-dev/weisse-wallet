@@ -1,57 +1,63 @@
+import { StyleSheet, Switch, View } from 'react-native';
+
+import { Text } from '@/components/ui/builders/Text';
 import { useWallet } from '@/providers/wallet-provider';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useAppTheme } from '@/theme/theme';
 
 export function NetworkModeToggle() {
+  const { colors } = useAppTheme();
   const { networkMode, toggleNetworkMode } = useWallet();
-
   const isTestnet = networkMode === 'testnet';
 
+  const activeColor = isTestnet ? '#F59E0B' : '#34C759';
+  const activeLabel = isTestnet ? 'Testnet' : 'Mainnet';
+  const nextLabel = isTestnet ? 'Mainnet' : 'Testnet';
+
   return (
-    <Pressable onPress={toggleNetworkMode} style={styles.container}>
-      <View style={[styles.toggle, isTestnet && styles.toggleTestnet]}>
-        <View style={[styles.indicator, isTestnet && styles.indicatorTestnet]} />
+    <View style={[styles.card, { backgroundColor: '#161B22', borderColor: colors.border }]}>
+      <View style={[styles.iconBox, { backgroundColor: isTestnet ? '#451A03' : '#052E16' }]}>
+        <Text fontSize={18}>{isTestnet ? '🧪' : '🌐'}</Text>
       </View>
-      <Text style={[styles.label, isTestnet && styles.labelTestnet]}>
-        {isTestnet ? 'Testnet' : 'Mainnet'}
-      </Text>
-    </Pressable>
+
+      <View style={styles.textBlock}>
+        <View style={styles.titleRow}>
+          <Text variant="p3-semibold" color="#fff">Режим сети: </Text>
+          <Text variant="p3-semibold" color={activeColor}>{activeLabel}</Text>
+        </View>
+        <Text variant="p4" color="#6B7280" mt={2}>
+          {'Переключиться на '}
+          <Text variant="p4-semibold" color="#9CA3AF">{nextLabel}</Text>
+        </Text>
+      </View>
+
+      <Switch
+        value={isTestnet}
+        onValueChange={toggleNetworkMode}
+        trackColor={{ false: '#30363D', true: '#F59E0B' }}
+        thumbColor="#fff"
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  card: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 20,
   },
-  toggle: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#34C759',
-    padding: 2,
+  iconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  toggleTestnet: {
-    backgroundColor: '#FF9500',
-  },
-  indicator: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#fff',
-  },
-  indicatorTestnet: {
-    alignSelf: 'flex-end',
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#34C759',
-  },
-  labelTestnet: {
-    color: '#FF9500',
-  },
+  textBlock: { flex: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
 });

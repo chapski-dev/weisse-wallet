@@ -30,6 +30,7 @@ export default function RootLayout() {
               <Stack.Screen name="send" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="receive" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="settings" options={{ headerShown: false, presentation: 'modal' }} />
+              <Stack.Screen name="add-wallet" options={{ headerShown: false, presentation: 'modal' }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
             </Stack>
             <StatusBar style="auto" />

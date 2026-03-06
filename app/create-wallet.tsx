@@ -1,61 +1,43 @@
-import { SeedPhraseDisplay } from '@/components/wallet/seed-phrase-display';
-import { useWallet } from '@/providers/wallet-provider';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Platform,
   ScrollView,
   StyleSheet,
-  Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-type Step = 'generate' | 'backup' | 'verify' | 'creating';
+import { Text } from '@/components/ui/builders/Text';
+import { SeedPhraseDisplay } from '@/components/wallet/seed-phrase-display';
+import { useWallet } from '@/providers/wallet-provider';
+import { useAppTheme } from '@/theme/theme';
+
+type Step = 'backup' | 'creating';
 
 export default function CreateWalletScreen() {
   const router = useRouter();
-  const { generateNewMnemonic, createWallet, mnemonic } = useWallet();
-  const [step, setStep] = useState<Step>('generate');
-  const [generatedMnemonic, setGeneratedMnemonic] = useState<string>('');
-  const [hasBackedUp, setHasBackedUp] = useState(false);
+  const { colors, insets } = useAppTheme();
+  const { generateNewMnemonic, createWallet } = useWallet();
+  const [step, setStep] = useState<Step>('backup');
+  const [generatedMnemonic, setGeneratedMnemonic] = useState('');
 
   useEffect(() => {
-    // Генерируем новую seed фразу при открытии экрана
-    const newMnemonic = generateNewMnemonic();
-    setGeneratedMnemonic(newMnemonic);
+    setGeneratedMnemonic(generateNewMnemonic());
   }, []);
 
-  const handleContinueToBackup = () => {
-    setStep('backup');
-  };
-
   const handleConfirmBackup = () => {
-    const message = 'Вы уверены, что сохранили seed фразу в безопасном месте? Вы не сможете восстановить кошелек без неё!';
-    
+    const message =
+      'Вы уверены, что сохранили seed фразу? Без неё восстановление невозможно!';
     if (Platform.OS === 'web') {
-      const confirmed = window.confirm(message);
-      if (confirmed) {
-        setHasBackedUp(true);
-        handleCreateWallet();
-      }
+      if (window.confirm(message)) handleCreateWallet();
     } else {
-      Alert.alert(
-        'Подтверждение',
-        message,
-        [
-          { text: 'Нет, вернуться', style: 'cancel' },
-          {
-            text: 'Да, я сохранил',
-            onPress: () => {
-              setHasBackedUp(true);
-              handleCreateWallet();
-            },
-          },
-        ]
-      );
+      Alert.alert('Подтверждение', message, [
+        { text: 'Отмена', style: 'cancel' },
+        { text: 'Да, сохранил', onPress: handleCreateWallet },
+      ]);
     }
   };
 
@@ -64,30 +46,26 @@ export default function CreateWalletScreen() {
     try {
       await createWallet(generatedMnemonic, 'Мой кошелек');
       if (Platform.OS === 'web') {
-        window.alert('Кошелек успешно создан!');
         router.replace('/(tabs)/wallet');
       } else {
         Alert.alert('Готово!', 'Кошелек успешно создан', [
           { text: 'OK', onPress: () => router.replace('/(tabs)/wallet') },
         ]);
       }
-    } catch (error) {
-      console.error(error)
-      if (Platform.OS === 'web') {
-        window.alert('Ошибка: Не удалось создать кошелек');
-      } else {
-        Alert.alert('Ошибка', 'Не удалось создать кошелек');
-      }
+    } catch {
+      Alert.alert('Ошибка', 'Не удалось создать кошелек');
       setStep('backup');
     }
   };
 
   if (step === 'creating') {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Создаём кошелек...</Text>
-        <Text style={styles.loadingSubtext}>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <View style={[styles.loaderCircle, { backgroundColor: colors.primary_700_15 }]}>
+          <Ionicons name="wallet" size={40} color={colors.primary} />
+        </View>
+        <Text variant="h4" center style={{ marginTop: 24 }}>Создаём кошелек...</Text>
+        <Text variant="p3" colorName="label" center style={{ marginTop: 8 }}>
           Генерируем адреса для всех сетей
         </Text>
       </View>
@@ -95,150 +73,125 @@ export default function CreateWalletScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Назад</Text>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+    >
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          <Text variant="p2" color={colors.primary}>Назад</Text>
         </TouchableOpacity>
       </View>
 
-      {step === 'generate' && (
-        <View style={styles.content}>
-          <Text style={styles.title}>Создание кошелька</Text>
-          <Text style={styles.description}>
-            Мы сгенерировали уникальную seed фразу из 12 слов. Эта фраза — единственный способ восстановить доступ к вашим средствам.
-          </Text>
-
-          <View style={styles.infoBox}>
-            <Text style={styles.infoTitle}>💡 Что такое seed фраза?</Text>
-            <Text style={styles.infoText}>
-              Seed фраза (мнемоническая фраза) — это набор слов, который используется для генерации всех ваших криптоадресов. Одна фраза = доступ ко всем сетям.
-            </Text>
-          </View>
-
-          <TouchableOpacity style={styles.primaryButton} onPress={handleContinueToBackup}>
-            <Text style={styles.primaryButtonText}>Показать seed фразу</Text>
-          </TouchableOpacity>
+      <View style={styles.content}>
+        <View style={styles.stepsRow}>
+          <View style={[styles.stepBar, { backgroundColor: colors.primary }]} />
+          <View style={[styles.stepBar, { backgroundColor: colors.grey_200 }]} />
         </View>
-      )}
+        <Text variant="p4" colorName="label" style={styles.stepLabel}>Шаг 1 из 2</Text>
 
-      {step === 'backup' && (
-        <View style={styles.content}>
-          <Text style={styles.title}>Сохраните seed фразу</Text>
-          <Text style={styles.description}>
-            Запишите эти 12 слов в правильном порядке и храните в безопасном месте.
-          </Text>
+        <Text variant="h3" style={styles.title}>Сохраните seed фразу</Text>
+        <Text variant="p3" colorName="label" style={styles.description}>
+          Запишите эти 12 слов в правильном порядке и храните в безопасном месте.
+        </Text>
 
+        <View style={[styles.seedCard, { backgroundColor: colors.grey_50, borderColor: colors.border }]}>
           <SeedPhraseDisplay mnemonic={generatedMnemonic} />
+        </View>
 
-          <View style={styles.warningBox}>
-            <Text style={styles.warningTitle}>⚠️ Важно!</Text>
-            <Text style={styles.warningText}>
-              • Никогда не делитесь seed фразой{'\n'}
-              • Не храните её в электронном виде{'\n'}
-              • Запишите на бумаге и храните в сейфе{'\n'}
-              • Потеря фразы = потеря доступа к средствам
+        <View style={[styles.warning, { backgroundColor: '#1C1405', borderColor: '#78350F' }]}>
+          <Ionicons name="warning" size={20} color="#F59E0B" style={styles.warningIcon} />
+          <View style={styles.warningBody}>
+            <Text variant="p3-semibold" color="#F59E0B" style={{ marginBottom: 6 }}>Важно!</Text>
+            <Text variant="p4" color="#D97706" style={{ lineHeight: 20 }}>
+              {'• Никогда не делитесь seed фразой\n• Не храните её в электронном виде\n• Запишите на бумаге и храните в сейфе\n• Потеря фразы = потеря доступа к средствам'}
             </Text>
           </View>
-
-          <TouchableOpacity style={styles.primaryButton} onPress={handleConfirmBackup}>
-            <Text style={styles.primaryButtonText}>Я сохранил фразу</Text>
-          </TouchableOpacity>
         </View>
-      )}
+
+        <TouchableOpacity
+          style={[styles.btnPrimary, { backgroundColor: colors.primary }]}
+          onPress={handleConfirmBackup}
+        >
+          <Text variant="p1-semibold" color="#fff">Я сохранил фразу</Text>
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: { flex: 1 },
+  centered: {
     flex: 1,
-    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  loaderCircle: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   header: {
-    padding: 16,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
-  backButton: {
-    fontSize: 16,
-    color: '#007AFF',
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 20,
+  },
+  stepsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 8,
+  },
+  stepBar: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+  },
+  stepLabel: {
+    marginBottom: 16,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
-    color: '#1A1A2E',
+    marginBottom: 8,
   },
   description: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
-  infoBox: {
-    backgroundColor: '#E8F4FF',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#007AFF',
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-  warningBox: {
-    backgroundColor: '#FFF3CD',
-    padding: 16,
-    borderRadius: 12,
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  warningTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#856404',
-  },
-  warningText: {
-    fontSize: 14,
-    color: '#856404',
     lineHeight: 22,
+    marginBottom: 24,
   },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-    paddingVertical: 16,
+  seedCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  warning: {
+    flexDirection: 'row',
     borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  warningIcon: { marginTop: 2 },
+  warningBody: { flex: 1 },
+  btnPrimary: {
+    height: 56,
+    borderRadius: 16,
     alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  loadingContainer: {
-    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 20,
-    color: '#333',
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
+    shadowColor: '#3B82F6',
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 8,
   },
 });

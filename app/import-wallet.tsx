@@ -1,20 +1,16 @@
-import { SeedPhraseInput } from '@/components/wallet/seed-phrase-input';
-import { useWallet } from '@/providers/wallet-provider';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+import { Text } from '@/components/ui/builders/Text';
+import { SeedPhraseInput } from '@/components/wallet/seed-phrase-input';
+import { useWallet } from '@/providers/wallet-provider';
+import { useAppTheme } from '@/theme/theme';
 
 export default function ImportWalletScreen() {
   const router = useRouter();
+  const { colors, insets } = useAppTheme();
   const { importWallet } = useWallet();
   const [isImporting, setIsImporting] = useState(false);
 
@@ -30,7 +26,7 @@ export default function ImportWalletScreen() {
           { text: 'OK', onPress: () => router.replace('/(tabs)/wallet') },
         ]);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Ошибка', 'Не удалось импортировать кошелек');
     } finally {
       setIsImporting(false);
@@ -39,35 +35,44 @@ export default function ImportWalletScreen() {
 
   if (isImporting) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text style={styles.loadingText}>Импортируем кошелек...</Text>
-        <Text style={styles.loadingSubtext}>
-          Восстанавливаем адреса для всех сетей
-        </Text>
+      <View style={[styles.centered, { backgroundColor: colors.background }]}>
+        <View style={[styles.loaderCircle, { backgroundColor: colors.primary_700_15 }]}>
+          <Ionicons name="wallet-outline" size={40} color={colors.primary} />
+        </View>
+        <Text variant="h4" center color="#fff" mt={24}>Импортируем...</Text>
+        <Text variant="p3" colorName="label" center mt={8}>Восстанавливаем адреса для всех сетей</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backButton}>← Назад</Text>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: colors.background }]}
+      contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+    >
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={20} color={colors.primary} />
+          <Text variant="p2" color={colors.primary}>Назад</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>Импорт кошелька</Text>
-        <Text style={styles.description}>
+        <Text variant="h3" color="#fff" mb={8}>Импорт кошелька</Text>
+        <Text variant="p3" colorName="label" mb={24} style={{ lineHeight: 22 }}>
           Введите вашу seed фразу (12 или 24 слова), чтобы восстановить доступ к кошельку.
         </Text>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.infoTitle}>🔒 Безопасность</Text>
-          <Text style={styles.infoText}>
-            Ваша seed фраза хранится только на устройстве в зашифрованном виде. Мы никогда не отправляем её на сервера.
-          </Text>
+        {/* Security info */}
+        <View style={[styles.infoBox, { backgroundColor: colors.primary_700_15, borderColor: '#1E3A5F' }]}>
+          <Ionicons name="lock-closed" size={18} color={colors.primary} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text variant="p3-semibold" color={colors.primary}>Безопасность</Text>
+            <Text variant="p4" color="#60A5FA" style={{ lineHeight: 18 }}>
+              Ваша seed фраза хранится только на устройстве в зашифрованном виде. Мы никогда не отправляем её на сервера.
+            </Text>
+          </View>
         </View>
 
         <SeedPhraseInput onValidPhrase={handleImport} />
@@ -77,65 +82,19 @@ export default function ImportWalletScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    padding: 16,
-    paddingTop: 60,
-  },
-  backButton: {
-    fontSize: 16,
-    color: '#007AFF',
-  },
-  content: {
-    padding: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 12,
-    color: '#1A1A2E',
-  },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
-    marginBottom: 24,
-  },
+  screen: { flex: 1 },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
+  loaderCircle: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center' },
+  header: { paddingHorizontal: 20, paddingBottom: 8 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  content: { paddingHorizontal: 20 },
   infoBox: {
-    backgroundColor: '#E8F4FF',
-    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
     borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
     marginBottom: 24,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#007AFF',
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 20,
-    color: '#333',
-  },
-  loadingSubtext: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
   },
 });

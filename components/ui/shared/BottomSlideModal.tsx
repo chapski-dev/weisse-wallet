@@ -1,5 +1,6 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProps } from '@gorhom/bottom-sheet';
 import React, { forwardRef } from 'react';
+import { Keyboard } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 
 import { useAppTheme } from '@/theme/theme';
@@ -24,6 +25,12 @@ export const BottomSlideModal = forwardRef<BottomSheetModal, TBottomSlideModalPr
         <BottomSheetBackdrop {...backdropProps} disappearsOnIndex={-1} />
       )}
       {...props}
+      onAnimate={(fromIndex, toIndex, fromPosition, toPosition) => {
+        if (toIndex === -1 && Keyboard.isVisible()) {
+          Keyboard.dismiss();
+        }
+        props.onAnimate?.(fromIndex, toIndex, fromPosition, toPosition);
+      }}
     />
   );
 });

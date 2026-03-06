@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
+import React, { useState } from 'react';
+import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
+
+import { Text } from '@/components/ui/builders/Text';
+import { useAppTheme } from '@/theme/theme';
 
 interface SeedPhraseDisplayProps {
   mnemonic: string;
@@ -8,43 +12,76 @@ interface SeedPhraseDisplayProps {
 }
 
 export function SeedPhraseDisplay({ mnemonic, showCopyButton = true }: SeedPhraseDisplayProps) {
+  const { colors } = useAppTheme();
   const [isRevealed, setIsRevealed] = useState(false);
   const words = mnemonic.split(' ');
 
+  // Split into 3 columns
+  const col1 = words.slice(0, 4);
+  const col2 = words.slice(4, 8);
+  const col3 = words.slice(8, 12);
+
   const handleCopy = async () => {
     await Clipboard.setStringAsync(mnemonic);
-    Alert.alert('Скопировано', 'Seed фраза скопирована в буфер обмена. Храните её в безопасности!');
+    Alert.alert('Скопировано', 'Seed фраза скопирована. Храните её в безопасности!');
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.warning}>
-        ⚠️ Никогда не делитесь этой фразой! Любой, кто её знает, может получить доступ к вашим средствам.
-      </Text>
-
+      {/* Reveal toggle */}
       <TouchableOpacity
-        style={styles.revealButton}
-        onPress={() => setIsRevealed(!isRevealed)}
+        style={[styles.revealBtn, { backgroundColor: colors.grey_200 }]}
+        onPress={() => setIsRevealed((v) => !v)}
       >
-        <Text style={styles.revealButtonText}>
-          {isRevealed ? '🙈 Скрыть фразу' : '👁️ Показать фразу'}
+        <Ionicons
+          name={isRevealed ? 'eye-off' : 'eye'}
+          size={18}
+          color={colors.label}
+        />
+        <Text variant="p4-semibold" colorName="label">
+          {isRevealed ? 'Скрыть фразу' : 'Показать фразу'}
         </Text>
       </TouchableOpacity>
 
-      <View style={styles.wordsContainer}>
-        {words.map((word, index) => (
-          <View key={index} style={styles.wordBox}>
-            <Text style={styles.wordNumber}>{index + 1}</Text>
-            <Text style={[styles.word, !isRevealed && styles.hidden]}>
-              {isRevealed ? word : '••••••'}
-            </Text>
+      {/* 3-column grid */}
+      <View style={styles.grid}>
+        {[col1, col2, col3].map((col, colIdx) => (
+          <View key={colIdx} style={styles.col}>
+            {col.map((word, rowIdx) => {
+              const index = colIdx * 4 + rowIdx + 1;
+              return (
+                <View
+                  key={index}
+                  style={[styles.wordCell, { backgroundColor: colors.grey_100 }]}
+                >
+                  <Text variant="p4" color="#6B7280" style={styles.wordNum}>
+                    {index}.
+                  </Text>
+                  <Text
+                    variant="p4-semibold"
+                    color={isRevealed ? colors.text : 'transparent'}
+                    style={[
+                      styles.wordText,
+                      !isRevealed && { textShadowColor: colors.label, textShadowRadius: 6 },
+                    ]}
+                  >
+                    {isRevealed ? word : '••••••'}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         ))}
       </View>
 
+      {/* Copy button */}
       {showCopyButton && isRevealed && (
-        <TouchableOpacity style={styles.copyButton} onPress={handleCopy}>
-          <Text style={styles.copyButtonText}>📋 Скопировать фразу</Text>
+        <TouchableOpacity
+          style={[styles.copyBtn, { borderColor: colors.border, borderWidth: 1 }]}
+          onPress={handleCopy}
+        >
+          <Ionicons name="copy-outline" size={16} color={colors.label} />
+          <Text variant="p4-semibold" colorName="label">Скопировать фразу</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -53,65 +90,45 @@ export function SeedPhraseDisplay({ mnemonic, showCopyButton = true }: SeedPhras
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    padding: 20,
+    gap: 16,
   },
-  warning: {
-    backgroundColor: '#FFF3CD',
-    color: '#856404',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    fontSize: 14,
-  },
-  revealButton: {
-    backgroundColor: '#E3E3E3',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  revealButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  wordsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  wordBox: {
-    width: '30%',
-    backgroundColor: '#F5F5F5',
-    padding: 10,
-    marginBottom: 10,
-    borderRadius: 8,
+  revealBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
-  wordNumber: {
-    fontSize: 12,
-    color: '#888',
-    marginRight: 8,
-    minWidth: 16,
+  grid: {
+    flexDirection: 'row',
+    gap: 8,
   },
-  word: {
-    fontSize: 14,
-    fontWeight: '500',
+  col: {
+    flex: 1,
+    gap: 8,
+  },
+  wordCell: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  wordNum: {
+    minWidth: 18,
+  },
+  wordText: {
     flex: 1,
   },
-  hidden: {
-    color: '#CCC',
-  },
-  copyButton: {
-    backgroundColor: '#007AFF',
-    padding: 14,
-    borderRadius: 8,
+  copyBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
-  },
-  copyButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    borderRadius: 8,
   },
 });

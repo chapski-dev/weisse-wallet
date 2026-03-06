@@ -1,8 +1,16 @@
-import { NETWORKS } from '@/constants/networks';
-import { WalletAccount } from '@/types/wallet';
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import React from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert } from 'react-native';
+
+import { Box } from '@/components/ui/builders/Box';
+import { Text } from '@/components/ui/builders/Text';
+import { Button } from '@/components/ui/shared/Button';
+import { NETWORKS } from '@/constants/networks';
+import { useAppTheme } from '@/theme/theme';
+import { WalletAccount } from '@/types/wallet';
+
+// ─── Account Card ─────────────────────────────────────────────────────────────
 
 interface AccountCardProps {
   account: WalletAccount;
@@ -11,6 +19,7 @@ interface AccountCardProps {
 }
 
 export function AccountCard({ account, onSend, onReceive }: AccountCardProps) {
+  const { colors } = useAppTheme();
   const network = NETWORKS[account.network];
 
   const copyAddress = async () => {
@@ -18,45 +27,68 @@ export function AccountCard({ account, onSend, onReceive }: AccountCardProps) {
     Alert.alert('Скопировано', 'Адрес скопирован в буфер обмена');
   };
 
-  const truncateAddress = (address: string) => {
-    if (address.length <= 16) return address;
-    return `${address.slice(0, 8)}...${address.slice(-6)}`;
-  };
+  const truncateAddress = (address: string) =>
+    address.length <= 16 ? address : `${address.slice(0, 8)}...${address.slice(-6)}`;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.networkBadge}>
-          <Text style={styles.networkIcon}>{network?.icon}</Text>
-          <Text style={styles.networkName}>{network.name}</Text>
-        </View>
-      </View>
+    <>
+      <Box
+        mx={20}
+        mb={16}
+        p={24}
+        gap={8}
+        borderRadius={24}
+        backgroundColor="#1E3A5F"
+        style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 32, elevation: 10 }}
+      >
+        {/* Card top row */}
+        <Box row justifyContent="space-between" alignItems="center">
+          <Box row alignItems="center" gap={8}>
+            <Box w={8} h={8} borderRadius={4} backgroundColor={colors.primary} />
+            <Text variant="p2" color="#9CA3AF">{network.name}</Text>
+          </Box>
+          <Text variant="h1" color="#4B8EF5">{network.icon}</Text>
+        </Box>
 
-      <View style={styles.balanceContainer}>
-        <Text style={styles.balance}>
-          {parseFloat(account.balance).toFixed(6)}
+        {/* Balance */}
+        <Text variant="h1" color="#fff" mt={8}>
+          {parseFloat(account.balance).toFixed(6)} {network.symbol}
         </Text>
-        <Text style={styles.symbol}>{network.symbol}</Text>
-      </View>
+        <Text variant="p4" color="#6B7280" mb={8}>≈ $—</Text>
 
-      <TouchableOpacity style={styles.addressContainer} onPress={copyAddress}>
-        <Text style={styles.address}>{truncateAddress(account.address)}</Text>
-        <Text style={styles.copyIcon}>📋</Text>
-      </TouchableOpacity>
-
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.actionButton} onPress={onSend}>
-          <Text style={styles.actionIcon}>↑</Text>
-          <Text style={styles.actionText}>Отправить</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.actionButton, styles.receiveButton]} onPress={onReceive}>
-          <Text style={styles.actionIcon}>↓</Text>
-          <Text style={styles.actionText}>Получить</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        {/* Address */}
+        <Box row alignItems="center" gap={8} pb={16} onPress={copyAddress}>
+          <Text variant="p4" color="#6B7280">{truncateAddress(account.address)}</Text>
+          <Ionicons name="copy-outline" size={14} color="#6B7280" />
+        </Box>
+      </Box>
+      {/* Action buttons */}
+      <Box row gap={12} mt={8} mx={20}>
+        <Button
+          onPress={onSend}
+          icon={<Ionicons name="arrow-up" size={18} color="#fff" />}
+          wrapperStyle={{ flex: 1 }}
+          buttonStyle={{ height: 52, borderRadius: 14 }}
+        >
+          Отправить
+        </Button>
+        <Button
+          type="outline"
+          backgroundColor="grey_200"
+          textColor="label"
+          onPress={onReceive}
+          icon={<Ionicons name="arrow-down" size={18} color="#9CA3AF" />}
+          wrapperStyle={{ flex: 1 }}
+          buttonStyle={{ height: 52, borderRadius: 14 }}
+        >
+          Получить
+        </Button>
+      </Box>
+    </>
   );
 }
+
+// ─── Account List Item ────────────────────────────────────────────────────────
 
 interface AccountListItemProps {
   account: WalletAccount;
@@ -64,163 +96,40 @@ interface AccountListItemProps {
 }
 
 export function AccountListItem({ account, onPress }: AccountListItemProps) {
+  const { colors } = useAppTheme();
   const network = NETWORKS[account.network];
 
-  const truncateAddress = (address: string) => {
-    return `${address.slice(0, 6)}...${address.slice(-4)}`;
-  };
-
   return (
-    <TouchableOpacity style={styles.listItem} onPress={onPress}>
-      <View style={styles.listItemLeft}>
-        <Text style={styles.listIcon}>{network?.icon}</Text>
-        <View>
-          <Text style={styles.listName}>{network.name}</Text>
-          <Text style={styles.listAddress}>{truncateAddress(account.address)}</Text>
-        </View>
-      </View>
-      <View style={styles.listItemRight}>
-        <Text style={styles.listBalance}>
-          {parseFloat(account.balance).toFixed(4)}
-        </Text>
-        <Text style={styles.listSymbol}>{network.symbol}</Text>
-      </View>
-    </TouchableOpacity>
+    <Box
+      row
+      alignItems="center"
+      justifyContent="space-between"
+      px={20}
+      py={10}
+      minHeight={60}
+      onPress={onPress}
+    >
+      <Box row alignItems="center" gap={12}>
+        <Box
+          w={38}
+          h={38}
+          borderRadius={19}
+          alignItems="center"
+          justifyContent="center"
+          backgroundColor={colors.grey_200}
+        >
+          <Text fontSize={20}>{network.icon}</Text>
+        </Box>
+        <Box gap={2}>
+          <Text variant="p3-semibold" color="#fff">{network.name}</Text>
+          <Text variant="p4" color="#6B7280">
+            {network.symbol} · {network.isTestnet ? 'Testnet' : 'Mainnet'}
+          </Text>
+        </Box>
+      </Box>
+      <Text variant="p3-semibold" color="#fff">
+        {parseFloat(account.balance).toFixed(4)} {network.symbol}
+      </Text>
+    </Box>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#1A1A2E',
-    borderRadius: 20,
-    padding: 20,
-    margin: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  networkBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  networkIcon: {
-    fontSize: 18,
-    marginRight: 6,
-  },
-  networkName: {
-    color: 'white',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  balanceContainer: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 8,
-  },
-  balance: {
-    color: 'white',
-    fontSize: 36,
-    fontWeight: '700',
-  },
-  symbol: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 18,
-    marginLeft: 8,
-  },
-  addressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 20,
-  },
-  address: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-    fontFamily: 'monospace',
-  },
-  copyIcon: {
-    marginLeft: 8,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  actionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#007AFF',
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginRight: 8,
-  },
-  receiveButton: {
-    backgroundColor: '#34C759',
-    marginRight: 0,
-    marginLeft: 8,
-  },
-  actionIcon: {
-    fontSize: 18,
-    color: 'white',
-    marginRight: 6,
-  },
-  actionText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  // List item styles
-  listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#F5F5F5',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 8,
-  },
-  listItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  listIcon: {
-    fontSize: 28,
-    marginRight: 12,
-  },
-  listName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  listAddress: {
-    fontSize: 12,
-    color: '#666',
-    fontFamily: 'monospace',
-    marginTop: 2,
-  },
-  listItemRight: {
-    alignItems: 'flex-end',
-  },
-  listBalance: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-  },
-  listSymbol: {
-    fontSize: 12,
-    color: '#666',
-  },
-});
