@@ -1,0 +1,288 @@
+import { getNetworksByMode, NETWORKS } from '@/constants/networks';
+import { walletService } from '@/services/wallet-service';
+import { MasterWallet, Network, NetworkMode, TESTNET_MAP, WalletAccount } from '@/types/wallet';
+import { mmkvStorage } from '@/utils/storage';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+
+const NETWORK_MODE_KEY = 'network_mode';
+
+// Типы для контекста
+export interface WalletContextState {
+  // State
+  isLoading: boolean;
+  isInitialized: boolean;
+  wallet: MasterWallet | null;
+  mnemonic: string | null;
+  selectedNetwork: Network;
+  networkMode: NetworkMode;
+
+  // Actions
+  setSelectedNetwork: (network: Network) => void;
+  setNetworkMode: (mode: NetworkMode) => Promise<void>;
+  toggleNetworkMode: () => Promise<void>;
+  generateNewMnemonic: () => string;
+  createWallet: (seedPhrase: string, name?: string) => Promise<MasterWallet>;
+  importWallet: (seedPhrase: string, name?: string) => Promise<MasterWallet>;
+  refreshBalances: () => Promise<void>;
+  getCurrentAccount: () => WalletAccount | undefined;
+  getAccountsForCurrentMode: () => WalletAccount[];
+  getActiveNetwork: (baseNetwork: Network) => Network;
+  deleteWallet: () => Promise<void>;
+  revealMnemonic: () => Promise<string | null>;
+  checkWallet: () => Promise<void>;
+}
+
+export const WalletContext = createContext<WalletContextState | null>(null);
+
+export function WalletProvider({ children }: { children: ReactNode }) {
+  const [isLoading, setIsLoading] = useState(true);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [wallet, setWallet] = useState<MasterWallet | null>(null);
+  const [mnemonic, setMnemonic] = useState<string | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<Network>(Network.ETHEREUM);
+  const [networkMode, setNetworkModeState] = useState<NetworkMode>('mainnet');
+
+  // Получить актуальную сеть с учётом режима
+  const getActiveNetwork = useCallback((baseNetwork: Network): Network => {
+    if (networkMode === 'testnet') {
+      return TESTNET_MAP[baseNetwork] || baseNetwork;
+    }
+    return baseNetwork;
+  }, [networkMode]);
+
+  // Загрузка режима сети
+  const loadNetworkMode = useCallback(() => {
+    try {
+      const savedMode = mmkvStorage.getItem(NETWORK_MODE_KEY);
+      if (savedMode === 'testnet' || savedMode === 'mainnet') {
+        setNetworkModeState(savedMode);
+      }
+    } catch (error) {
+      console.error('Failed to load network mode:', error);
+    }
+  }, []);
+
+  // Установка режима сети
+  const setNetworkMode = useCallback(async (newMode: NetworkMode) => {
+    try {
+      mmkvStorage.setItem(NETWORK_MODE_KEY, newMode);
+      setNetworkModeState(newMode);
+    } catch (error) {
+      console.error('Failed to save network mode:', error);
+    }
+  }, []);
+
+  // Переключение режима
+  const toggleNetworkMode = useCallback(async () => {
+    const newMode = networkMode === 'mainnet' ? 'testnet' : 'mainnet';
+    await setNetworkMode(newMode);
+  }, [networkMode, setNetworkMode]);
+
+  // Проверка наличия кошелька при запуске
+  useEffect(() => {
+    loadNetworkMode();
+    checkWallet();
+  }, []);
+
+  const checkWallet = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const hasWallet = await walletService.hasWallet();
+      if (hasWallet) {
+        const walletData = await walletService.loadWalletData();
+        if (walletData) {
+          // Миграция: добавляем аккаунты для сетей, добавленных после создания кошелька
+          const existingNetworks = new Set(walletData.accounts.map((a) => a.network));
+          const missingEVMNetworks = Object.values(NETWORKS).filter(
+            (n) => n.isEVM && !existingNetworks.has(n.id)
+          );
+          if (missingEVMNetworks.length > 0) {
+            const evmWallet = await walletService.getEVMWallet(Network.ETHEREUM);
+            for (const network of missingEVMNetworks) {
+              walletData.accounts.push({ network: network.id, address: evmWallet.address, balance: '0' });
+            }
+            await walletService.saveWalletData(walletData);
+          }
+          setWallet(walletData);
+          setIsInitialized(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check wallet:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Генерация новой seed фразы
+  const generateNewMnemonic = useCallback(() => {
+    const newMnemonic = walletService.generateMnemonic();
+    setMnemonic(newMnemonic);
+    return newMnemonic;
+  }, []);
+
+  // Создание кошелька из seed фразы
+  const createWallet = useCallback(async (seedPhrase: string, name: string = 'Main Wallet') => {
+    setIsLoading(true);
+    try {
+      if (!walletService.validateMnemonic(seedPhrase)) {
+        throw new Error('Invalid seed phrase');
+      }
+
+      await walletService.saveMnemonic(seedPhrase);
+      const accounts = await walletService.createAccountsForAllNetworks();
+
+      const newWallet: MasterWallet = {
+        id: Date.now().toString(),
+        name,
+        createdAt: Date.now(),
+        accounts,
+      };
+
+      await walletService.saveWalletData(newWallet);
+
+      setWallet(newWallet);
+      setMnemonic(seedPhrase);
+      setIsInitialized(true);
+
+      return newWallet;
+    } catch (error) {
+      console.error('Failed to create wallet:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Импорт существующего кошелька
+  const importWallet = useCallback(async (seedPhrase: string, name: string = 'Imported Wallet') => {
+    return createWallet(seedPhrase, name);
+  }, [createWallet]);
+
+  // Обновление балансов
+  const refreshBalances = useCallback(async () => {
+    if (!wallet) return;
+
+    setIsLoading(true);
+    try {
+      const currentNetworks = getNetworksByMode(networkMode);
+      const currentNetworkIds = new Set(currentNetworks.map(n => n.id));
+      
+      const updatedAccounts = await Promise.all(
+        wallet.accounts.map(async (account) => {
+          if (!currentNetworkIds.has(account.network)) {
+            return account;
+          }
+          
+          const networkInfo = NETWORKS[account.network];
+          if (networkInfo?.isEVM) {
+            const balance = await walletService.getEVMBalance(account.network, account.address);
+            return { ...account, balance };
+          }
+          return account;
+        })
+      );
+
+      const updatedWallet = { ...wallet, accounts: updatedAccounts };
+      setWallet(updatedWallet);
+      await walletService.saveWalletData(updatedWallet);
+    } catch (error) {
+      console.error('Failed to refresh balances:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [wallet, networkMode]);
+
+  // Получение аккаунта для выбранной сети
+  const getCurrentAccount = useCallback((): WalletAccount | undefined => {
+    const activeNetwork = getActiveNetwork(selectedNetwork);
+    return wallet?.accounts.find((a) => a.network === activeNetwork);
+  }, [wallet, selectedNetwork, getActiveNetwork]);
+
+  // Получение аккаунтов для текущего режима
+  const getAccountsForCurrentMode = useCallback((): WalletAccount[] => {
+    if (!wallet) return [];
+    const currentNetworks = getNetworksByMode(networkMode);
+    const currentNetworkIds = new Set(currentNetworks.map(n => n.id));
+    return wallet.accounts.filter(a => currentNetworkIds.has(a.network));
+  }, [wallet, networkMode]);
+
+  // Удаление кошелька
+  const deleteWallet = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      await walletService.deleteWallet();
+      setWallet(null);
+      setMnemonic(null);
+      setIsInitialized(false);
+    } catch (error) {
+      console.error('Failed to delete wallet:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Получение seed фразы
+  const revealMnemonic = useCallback(async (): Promise<string | null> => {
+    return walletService.loadMnemonic();
+  }, []);
+
+  const value = useMemo<WalletContextState>(
+    () => ({
+      isLoading,
+      isInitialized,
+      wallet,
+      mnemonic,
+      selectedNetwork,
+      networkMode,
+      setSelectedNetwork,
+      setNetworkMode,
+      toggleNetworkMode,
+      generateNewMnemonic,
+      createWallet,
+      importWallet,
+      refreshBalances,
+      getCurrentAccount,
+      getAccountsForCurrentMode,
+      getActiveNetwork,
+      deleteWallet,
+      revealMnemonic,
+      checkWallet,
+    }),
+    [
+      isLoading,
+      isInitialized,
+      wallet,
+      mnemonic,
+      selectedNetwork,
+      networkMode,
+      setNetworkMode,
+      toggleNetworkMode,
+      generateNewMnemonic,
+      createWallet,
+      importWallet,
+      refreshBalances,
+      getCurrentAccount,
+      getAccountsForCurrentMode,
+      getActiveNetwork,
+      deleteWallet,
+      revealMnemonic,
+      checkWallet,
+    ]
+  );
+
+  return (
+    <WalletContext.Provider value={value}>
+      {children}
+    </WalletContext.Provider>
+  );
+}
+
+export function useWallet(): WalletContextState {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
+}
