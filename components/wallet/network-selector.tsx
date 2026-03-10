@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { Text } from '@/components/ui/builders/Text';
+import { TokenIcon } from '@/components/wallet/token-icon';
 import { getNetworksByMode } from '@/constants/networks';
 import { useWallet } from '@/providers/wallet-provider';
 import { useAppTheme } from '@/theme/theme';
@@ -37,7 +38,7 @@ export function NetworkSelector({ selectedNetwork, onSelectNetwork }: NetworkSel
             ]}
             onPress={() => onSelectNetwork(network.id)}
           >
-            <Text style={styles.chipIcon}>{network.icon}</Text>
+            <TokenIcon symbol={network.symbol} networkId={network.id} size={18} />
             <Text variant="p4-semibold" color={isSelected ? '#fff' : colors.label}>
               {network.name}
             </Text>
@@ -78,9 +79,7 @@ export function NetworkList({ selectedNetwork, onSelectNetwork, mode = 'mainnet'
             onPress={() => onSelectNetwork(network.id)}
           >
             <View style={styles.listLeft}>
-              <View style={[styles.iconBg, { backgroundColor: colors.grey_200 }]}>
-                <Text style={styles.chipIcon}>{network.icon}</Text>
-              </View>
+              <TokenIcon symbol={network.symbol} networkId={network.id} size={38} />
               <View style={{ gap: 2 }}>
                 <Text variant="p3-semibold">{network.name}</Text>
                 <Text variant="p4" colorName="label">{network.symbol}</Text>
@@ -107,7 +106,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  chipIcon: { fontSize: 14 },
   listItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -118,11 +116,4 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   listLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  iconBg: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
 });

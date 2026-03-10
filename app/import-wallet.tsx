@@ -20,10 +20,10 @@ export default function ImportWalletScreen() {
       await importWallet(mnemonic, 'Импортированный кошелек');
       if (Platform.OS === 'web') {
         window.alert('Кошелек успешно импортирован!');
-        router.replace('/(tabs)/wallet');
+        router.dismissAll();
       } else {
         Alert.alert('Готово!', 'Кошелек успешно импортирован', [
-          { text: 'OK', onPress: () => router.replace('/(tabs)/wallet') },
+          { text: 'OK', onPress: () => router.dismissAll() },
         ]);
       }
     } catch {

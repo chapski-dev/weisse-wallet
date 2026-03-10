@@ -1,9 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet } from 'react-native';
 
+import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
+import { ScreenHeader } from '@/components/ui/layouts/ScreenHeader';
+import { SectionListItemWithArrow } from '@/components/ui/shared/SectionListItemWithArrow';
 import { NetworkModeToggle } from '@/components/ui/network-mode-toggle';
 import { SeedPhraseDisplay } from '@/components/wallet/seed-phrase-display';
 import { useWallet } from '@/providers/wallet-provider';
@@ -59,149 +62,107 @@ export default function SettingsScreen() {
 
   return (
     <ScrollView
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
     >
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={20} color={colors.primary} />
-          <Text variant="p2" color={colors.primary}>Назад</Text>
-        </TouchableOpacity>
-        <Text variant="h5" color="#fff">Настройки</Text>
-        <View style={{ width: 60 }} />
-      </View>
+      <ScreenHeader title="Настройки" />
 
-      <View style={styles.content}>
-        {/* Wallet info */}
+      <Box px={20} pt={16}>
+        {/* ─── Wallet info ─── */}
         <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>КОШЕЛЁК</Text>
-        <View style={[styles.card, { borderColor: colors.border }]}>
-          <View style={styles.row}>
+        <Box backgroundColor="#161B22" borderRadius={16} borderWidth={1} borderColor={colors.border} mb={20} overflow="hidden">
+          <Box row justifyContent="space-between" alignItems="center" px={16} py={14}>
             <Text variant="p3" color="#9CA3AF">Название</Text>
             <Text variant="p3-semibold" color="#fff">{wallet?.name ?? '—'}</Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <View style={styles.row}>
+          </Box>
+          <Box h={StyleSheet.hairlineWidth} mx={16} backgroundColor={colors.border} />
+          <Box row justifyContent="space-between" alignItems="center" px={16} py={14}>
             <Text variant="p3" color="#9CA3AF">Создан</Text>
             <Text variant="p3-semibold" color="#fff">
               {wallet?.createdAt ? new Date(wallet.createdAt).toLocaleDateString('ru-RU') : '—'}
             </Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <View style={styles.row}>
+          </Box>
+          <Box h={StyleSheet.hairlineWidth} mx={16} backgroundColor={colors.border} />
+          <Box row justifyContent="space-between" alignItems="center" px={16} py={14}>
             <Text variant="p3" color="#9CA3AF">Сетей</Text>
             <Text variant="p3-semibold" color="#fff">{wallet?.accounts.length ?? 0}</Text>
-          </View>
-        </View>
+          </Box>
+        </Box>
 
-        {/* Network mode */}
+        {/* ─── Network mode ─── */}
         <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>СЕТЬ</Text>
         <NetworkModeToggle />
 
-        {/* Security */}
+        {/* ─── Security ─── */}
         <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>БЕЗОПАСНОСТЬ</Text>
-        <View style={[styles.card, { borderColor: colors.border }]}>
+        <Box backgroundColor="#161B22" borderRadius={16} borderWidth={1} borderColor={colors.border} mb={20} overflow="hidden">
           {!showSeedPhrase ? (
-            <TouchableOpacity style={styles.row} onPress={handleRevealSeedPhrase}>
-              <View style={[styles.iconBox, { backgroundColor: colors.primary_700_15 }]}>
-                <Ionicons name="key-outline" size={18} color={colors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
+            <SectionListItemWithArrow
+              onPress={handleRevealSeedPhrase}
+              borderBottom={false}
+              icon={
+                <Box w={36} h={36} borderRadius={10} alignItems="center" justifyContent="center" backgroundColor={colors.primary_700_15}>
+                  <Ionicons name="key-outline" size={18} color={colors.primary} />
+                </Box>
+              }
+            >
+              <Box gap={2}>
                 <Text variant="p3-semibold" color="#fff">Показать seed фразу</Text>
-                <Text variant="p4" color="#6B7280" mt={2}>Получить доступ к резервной фразе</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#6B7280" />
-            </TouchableOpacity>
+                <Text variant="p4" color="#6B7280">Получить доступ к резервной фразе</Text>
+              </Box>
+            </SectionListItemWithArrow>
           ) : (
-            <View>
+            <Box>
               <SeedPhraseDisplay mnemonic={mnemonic ?? ''} />
-              <TouchableOpacity
-                style={[styles.hideSeedBtn, { borderTopColor: colors.border }]}
+              <Box
+                row alignItems="center" justifyContent="center" gap={6}
+                py={12} borderTopWidth={StyleSheet.hairlineWidth} borderColor={colors.border}
                 onPress={() => { setShowSeedPhrase(false); setMnemonic(null); }}
               >
                 <Ionicons name="eye-off-outline" size={16} color="#6B7280" />
                 <Text variant="p4-semibold" color="#6B7280">Скрыть seed фразу</Text>
-              </TouchableOpacity>
-            </View>
+              </Box>
+            </Box>
           )}
-        </View>
+        </Box>
 
-        {/* About */}
+        {/* ─── About ─── */}
         <Text variant="p4-semibold" color="#6B7280" style={styles.sectionLabel}>О ПРИЛОЖЕНИИ</Text>
-        <View style={[styles.card, { borderColor: colors.border }]}>
-          <View style={styles.row}>
+        <Box backgroundColor="#161B22" borderRadius={16} borderWidth={1} borderColor={colors.border} mb={20} overflow="hidden">
+          <Box row justifyContent="space-between" alignItems="center" px={16} py={14}>
             <Text variant="p3" color="#9CA3AF">Версия</Text>
             <Text variant="p3-semibold" color="#fff">1.0.0</Text>
-          </View>
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <View style={styles.row}>
+          </Box>
+          <Box h={StyleSheet.hairlineWidth} mx={16} backgroundColor={colors.border} />
+          <Box row justifyContent="space-between" alignItems="center" px={16} py={14}>
             <Text variant="p3" color="#9CA3AF">Приложение</Text>
             <Text variant="p3-semibold" color="#fff">Weiss Wallet</Text>
-          </View>
-        </View>
+          </Box>
+        </Box>
 
-        {/* Danger zone */}
+        {/* ─── Danger zone ─── */}
         <Text variant="p4-semibold" color="#EF4444" style={styles.sectionLabel}>ОПАСНАЯ ЗОНА</Text>
-        <TouchableOpacity
-          style={[styles.card, styles.dangerCard, { borderColor: '#7F1D1D' }]}
-          onPress={handleDeleteWallet}
-        >
-          <View style={[styles.iconBox, { backgroundColor: '#450A0A' }]}>
-            <Ionicons name="trash-outline" size={18} color="#EF4444" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text variant="p3-semibold" color="#EF4444">Удалить кошелек</Text>
-            <Text variant="p4" color="#7F1D1D" mt={2}>Необратимое действие</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color="#7F1D1D" />
-        </TouchableOpacity>
-      </View>
+        <Box backgroundColor="#161B22" borderRadius={16} borderWidth={1} borderColor="#7F1D1D" mb={20} overflow="hidden">
+          <SectionListItemWithArrow
+            onPress={handleDeleteWallet}
+            borderBottom={false}
+            icon={
+              <Box w={36} h={36} borderRadius={10} alignItems="center" justifyContent="center" backgroundColor="#450A0A">
+                <Ionicons name="trash-outline" size={18} color="#EF4444" />
+              </Box>
+            }
+          >
+            <Box gap={2}>
+              <Text variant="p3-semibold" color="#EF4444">Удалить кошелек</Text>
+              <Text variant="p4" color="#7F1D1D">Необратимое действие</Text>
+            </Box>
+          </SectionListItemWithArrow>
+        </Box>
+      </Box>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-  },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: 60 },
-  content: { paddingHorizontal: 20, paddingTop: 16 },
   sectionLabel: { marginBottom: 8, marginTop: 8, letterSpacing: 0.5 },
-  card: {
-    backgroundColor: '#161B22',
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  hideSeedBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  dangerCard: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, gap: 12 },
 });

@@ -46,10 +46,10 @@ export default function CreateWalletScreen() {
     try {
       await createWallet(generatedMnemonic, 'Мой кошелек');
       if (Platform.OS === 'web') {
-        router.replace('/(tabs)/wallet');
+        router.dismissAll();
       } else {
         Alert.alert('Готово!', 'Кошелек успешно создан', [
-          { text: 'OK', onPress: () => router.replace('/(tabs)/wallet') },
+          { text: 'OK', onPress: () => router.dismissAll() },
         ]);
       }
     } catch {

@@ -6,7 +6,6 @@ import { RefreshControl, ScrollView, StyleSheet, TouchableOpacity } from 'react-
 import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
 import { AccountCard, AccountListItem } from '@/components/wallet/account-card';
-import { NetworkSelector } from '@/components/wallet/network-selector';
 import { WalletSwitcherModal } from '@/components/wallet/wallet-switcher-modal';
 import { useWallet } from '@/providers/wallet-provider';
 import { useAppTheme } from '@/theme/theme';
@@ -83,9 +82,7 @@ export default function WalletScreen() {
     isLoading,
     isInitialized,
     wallet,
-    selectedNetwork,
     networkMode,
-    setSelectedNetwork,
     getCurrentAccount,
     getAccountsForCurrentMode,
     refreshBalances,
@@ -129,21 +126,27 @@ export default function WalletScreen() {
             </Box>
           )}
         </Box>
-        <TouchableOpacity
-          style={[styles.settingsBtn, { backgroundColor: colors.grey_200 }]}
-          onPress={() => router.push("/settings")}
-        >
-          <Ionicons name="settings" size={20} color={colors.label} />
-        </TouchableOpacity>
+        <Box row gap={8}>
+          <TouchableOpacity
+            style={[styles.settingsBtn, { backgroundColor: colors.grey_200 }]}
+            onPress={() => router.push('/wc-connect')}
+          >
+            <Ionicons name="link" size={20} color={colors.label} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.settingsBtn, { backgroundColor: colors.grey_200 }]}
+            onPress={() => router.push('/settings')}
+          >
+            <Ionicons name="settings" size={20} color={colors.label} />
+          </TouchableOpacity>
+        </Box>
       </Box>
-
-      {/* Network selector */}
-      <NetworkSelector selectedNetwork={selectedNetwork} onSelectNetwork={setSelectedNetwork} />
 
       {/* Account card */}
       {currentAccount && (
         <AccountCard
-          account={currentAccount}
+          accounts={accounts}
+          selectedAccount={currentAccount}
           onSend={() => router.push('/send')}
           onReceive={() => router.push('/receive')}
         />
@@ -160,7 +163,7 @@ export default function WalletScreen() {
         <AccountListItem
           key={account.network}
           account={account}
-          onPress={() => setSelectedNetwork(account.network)}
+          onPress={() => router.push({ pathname: '/token-detail', params: { network: account.network } })}
         />
       ))}
     </ScrollView>

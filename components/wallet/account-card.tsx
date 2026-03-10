@@ -1,68 +1,63 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as Clipboard from 'expo-clipboard';
-import React from 'react';
-import { Alert } from 'react-native';
+import React, { useEffect, useState } from 'react';
 
 import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
 import { Button } from '@/components/ui/shared/Button';
+import { TokenIcon } from '@/components/wallet/token-icon';
 import { NETWORKS } from '@/constants/networks';
-import { useAppTheme } from '@/theme/theme';
+import { getTokenPrice } from '@/services/price-service';
 import { WalletAccount } from '@/types/wallet';
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+function fmtUsd(value: number): string {
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 // ─── Account Card ─────────────────────────────────────────────────────────────
 
 interface AccountCardProps {
-  account: WalletAccount;
+  accounts: WalletAccount[];
+  selectedAccount: WalletAccount;
   onSend?: () => void;
   onReceive?: () => void;
 }
 
-export function AccountCard({ account, onSend, onReceive }: AccountCardProps) {
-  const { colors } = useAppTheme();
-  const network = NETWORKS[account.network];
+export function AccountCard({ accounts, onSend, onReceive }: AccountCardProps) {
+  const [totalUsd, setTotalUsd] = useState<number | null>(null);
 
-  const copyAddress = async () => {
-    await Clipboard.setStringAsync(account.address);
-    Alert.alert('Скопировано', 'Адрес скопирован в буфер обмена');
-  };
-
-  const truncateAddress = (address: string) =>
-    address.length <= 16 ? address : `${address.slice(0, 8)}...${address.slice(-6)}`;
+  useEffect(() => {
+    let cancelled = false;
+    async function compute() {
+      const values = await Promise.all(
+        accounts.map(async (a) => {
+          const info = await getTokenPrice(a.network);
+          if (!info) return 0;
+          return parseFloat(a.balance) * info.price;
+        }),
+      );
+      if (!cancelled) setTotalUsd(values.reduce((s, v) => s + v, 0));
+    }
+    compute();
+    return () => { cancelled = true; };
+  }, [accounts]);
 
   return (
     <>
       <Box
-        mx={20}
-        mb={16}
-        p={24}
-        gap={8}
-        borderRadius={24}
+        mx={20} mb={16} p={24} gap={8} borderRadius={24}
         backgroundColor="#1E3A5F"
         style={{ shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 32, elevation: 10 }}
       >
-        {/* Card top row */}
-        <Box row justifyContent="space-between" alignItems="center">
-          <Box row alignItems="center" gap={8}>
-            <Box w={8} h={8} borderRadius={4} backgroundColor={colors.primary} />
-            <Text variant="p2" color="#9CA3AF">{network.name}</Text>
-          </Box>
-          <Text variant="h1" color="#4B8EF5">{network.icon}</Text>
-        </Box>
-
-        {/* Balance */}
-        <Text variant="h1" color="#fff" mt={8}>
-          {parseFloat(account.balance).toFixed(6)} {network.symbol}
+        <Text variant="p2" color="#9CA3AF">Общий баланс</Text>
+        {/* Total USD */}
+        <Text variant="h1">
+          {totalUsd !== null ? `$${fmtUsd(totalUsd)}` : '—'}
         </Text>
-        <Text variant="p4" color="#6B7280" mb={8}>≈ $—</Text>
-
-        {/* Address */}
-        <Box row alignItems="center" gap={8} pb={16} onPress={copyAddress}>
-          <Text variant="p4" color="#6B7280">{truncateAddress(account.address)}</Text>
-          <Ionicons name="copy-outline" size={14} color="#6B7280" />
-        </Box>
       </Box>
-      {/* Action buttons */}
+
+      {/* Actions */}
       <Box row gap={12} mt={8} mx={20}>
         <Button
           onPress={onSend}
@@ -96,30 +91,21 @@ interface AccountListItemProps {
 }
 
 export function AccountListItem({ account, onPress }: AccountListItemProps) {
-  const { colors } = useAppTheme();
   const network = NETWORKS[account.network];
+  const [usdValue, setUsdValue] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getTokenPrice(account.network).then((info) => {
+      if (!cancelled && info) setUsdValue(parseFloat(account.balance) * info.price);
+    });
+    return () => { cancelled = true; };
+  }, [account.network, account.balance]);
 
   return (
-    <Box
-      row
-      alignItems="center"
-      justifyContent="space-between"
-      px={20}
-      py={10}
-      minHeight={60}
-      onPress={onPress}
-    >
+    <Box row alignItems="center" justifyContent="space-between" px={20} py={10} minHeight={60} onPress={onPress}>
       <Box row alignItems="center" gap={12}>
-        <Box
-          w={38}
-          h={38}
-          borderRadius={19}
-          alignItems="center"
-          justifyContent="center"
-          backgroundColor={colors.grey_200}
-        >
-          <Text fontSize={20}>{network.icon}</Text>
-        </Box>
+        <TokenIcon symbol={network.symbol} networkId={network.id} size={38} />
         <Box gap={2}>
           <Text variant="p3-semibold" color="#fff">{network.name}</Text>
           <Text variant="p4" color="#6B7280">
@@ -127,9 +113,14 @@ export function AccountListItem({ account, onPress }: AccountListItemProps) {
           </Text>
         </Box>
       </Box>
-      <Text variant="p3-semibold" color="#fff">
-        {parseFloat(account.balance).toFixed(4)} {network.symbol}
-      </Text>
+      <Box alignItems="flex-end" gap={2}>
+        <Text variant="p3-semibold" color="#fff">
+          {parseFloat(account.balance).toFixed(4)} {network.symbol}
+        </Text>
+        <Text variant="caption" color="#6B7280">
+          {usdValue !== null ? `$${fmtUsd(usdValue)}` : '—'}
+        </Text>
+      </Box>
     </Box>
   );
 }

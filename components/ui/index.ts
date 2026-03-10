@@ -20,6 +20,7 @@ export { StatusBanner } from './shared/StatusBanner';
 
 // Layouts
 export { Gap } from './layouts/Gap';
+export { ScreenHeader } from './layouts/ScreenHeader';
 export { FakeView } from './layouts/FakeView';
 export { ModalLayout, modal } from './layouts/ModalLayout';
 export type { IModalParams } from './layouts/ModalLayout';

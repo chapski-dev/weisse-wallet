@@ -92,4 +92,6 @@ export interface Transaction {
   network: Network;
   timestamp: number;
   status: 'pending' | 'confirmed' | 'failed';
+  type: 'incoming' | 'outgoing';
+  fee?: string;
 }
