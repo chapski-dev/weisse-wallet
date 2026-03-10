@@ -6,8 +6,8 @@ import { Alert, Platform, ScrollView, StyleSheet } from 'react-native';
 import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
 import { ScreenHeader } from '@/components/ui/layouts/ScreenHeader';
-import { SectionListItemWithArrow } from '@/components/ui/shared/SectionListItemWithArrow';
 import { NetworkModeToggle } from '@/components/ui/network-mode-toggle';
+import { SectionListItemWithArrow } from '@/components/ui/shared/SectionListItemWithArrow';
 import { SeedPhraseDisplay } from '@/components/wallet/seed-phrase-display';
 import { useWallet } from '@/providers/wallet-provider';
 import { useAppTheme } from '@/theme/theme';
@@ -15,7 +15,7 @@ import { useAppTheme } from '@/theme/theme';
 export default function SettingsScreen() {
   const router = useRouter();
   const { colors, insets } = useAppTheme();
-  const { wallet, deleteWallet, revealMnemonic } = useWallet();
+  const { wallet, wallets, deleteWallet, revealMnemonic } = useWallet();
   const [showSeedPhrase, setShowSeedPhrase] = useState(false);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
 
@@ -36,7 +36,7 @@ export default function SettingsScreen() {
 
   const performDelete = async () => {
     await deleteWallet();
-    router.replace('/(tabs)/wallet');
+    router.dismissAll();
   };
 
   const handleDeleteWallet = () => {
@@ -116,7 +116,7 @@ export default function SettingsScreen() {
               <SeedPhraseDisplay mnemonic={mnemonic ?? ''} />
               <Box
                 row alignItems="center" justifyContent="center" gap={6}
-                py={12} borderTopWidth={StyleSheet.hairlineWidth} borderColor={colors.border}
+                py={12} borderColor={colors.border}
                 onPress={() => { setShowSeedPhrase(false); setMnemonic(null); }}
               >
                 <Ionicons name="eye-off-outline" size={16} color="#6B7280" />

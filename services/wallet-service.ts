@@ -444,7 +444,10 @@ class WalletService {
         await this.setActiveWalletId(remaining[0].id);
         return remaining[0];
       }
+      // Если кошельков больше нет, удаляем все данные включая legacy ключи
       await secureStorage.deleteItemAsync(ACTIVE_WALLET_ID_KEY);
+      await secureStorage.deleteItemAsync(MNEMONIC_KEY);
+      await secureStorage.deleteItemAsync(WALLET_DATA_KEY);
       return null;
     }
     return wallets.find((w) => w.id === activeId) ?? null;
@@ -455,24 +458,6 @@ class WalletService {
     if (wallets.length > 0) return true;
     const old = await secureStorage.getItemAsync(MNEMONIC_KEY);
     return old !== null;
-  }
-
-  // Миграция старого формата (single wallet) в новый (multi-wallet list)
-  async migrateIfNeeded(): Promise<void> {
-    const wallets = await this.loadWalletsList();
-    if (wallets.length > 0) return;
-
-    const oldMnemonic = await secureStorage.getItemAsync(MNEMONIC_KEY);
-    if (!oldMnemonic) return;
-
-    const data = await secureStorage.getItemAsync(WALLET_DATA_KEY);
-    if (!data) return;
-
-    const oldWallet: MasterWallet = JSON.parse(data);
-    await this.saveWalletsList([oldWallet]);
-    await this.saveMnemonicForWallet(oldWallet.id, oldMnemonic);
-    await this.setActiveWalletId(oldWallet.id);
-    this.mnemonic = oldMnemonic;
   }
 }
 

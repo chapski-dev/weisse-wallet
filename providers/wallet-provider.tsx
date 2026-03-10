@@ -10,6 +10,7 @@ const NETWORK_MODE_KEY = 'network_mode';
 export interface WalletContextState {
   // State
   isLoading: boolean;
+  isInitializing: boolean;
   isInitialized: boolean;
   wallet: MasterWallet | null;
   wallets: MasterWallet[];
@@ -32,19 +33,19 @@ export interface WalletContextState {
   getActiveNetwork: (baseNetwork: Network) => Network;
   deleteWallet: () => Promise<void>;
   revealMnemonic: () => Promise<string | null>;
-  checkWallet: () => Promise<void>;
 }
 
 export const WalletContext = createContext<WalletContextState | null>(null);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
   const [wallet, setWallet] = useState<MasterWallet | null>(null);
   const [wallets, setWallets] = useState<MasterWallet[]>([]);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
   const [selectedNetwork, setSelectedNetwork] = useState<Network>(Network.ETHEREUM);
-  const [networkMode, setNetworkModeState] = useState<NetworkMode>('mainnet');
+  const [networkMode, setNetworkModeState] = useState<NetworkMode>('testnet');
 
   // Получить актуальную сеть с учётом режима
   const getActiveNetwork = useCallback((baseNetwork: Network): Network => {
@@ -89,9 +90,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkWallet = useCallback(async () => {
-    setIsLoading(true);
+    setIsInitializing(true);
     try {
-      await walletService.migrateIfNeeded();
       const walletsList = await walletService.loadWalletsList();
       if (walletsList.length > 0) {
         setWallets(walletsList);
@@ -113,11 +113,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         }
         setWallet(activeWallet);
         setIsInitialized(true);
+
+        // Загружаем балансы при входе в приложение (в фоне)
+        // Используем setTimeout чтобы не блокировать инициализацию
+        setTimeout(() => {
+          refreshBalancesInternal(activeWallet);
+        }, 100);
       }
     } catch (error) {
       console.error('Failed to check wallet:', error);
     } finally {
-      setIsLoading(false);
+      setIsInitializing(false);
     }
   }, []);
 
@@ -153,6 +159,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       setMnemonic(seedPhrase);
       setIsInitialized(true);
 
+      // Загружаем балансы для нового кошелька (в фоне)
+      setTimeout(() => {
+        refreshBalancesInternal(newWallet);
+      }, 100);
+
       return newWallet;
     } catch (error) {
       console.error('Failed to create wallet:', error);
@@ -167,39 +178,51 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return createWallet(seedPhrase, name);
   }, [createWallet]);
 
-  // Обновление балансов
-  const refreshBalances = useCallback(async () => {
-    if (!wallet) return;
-
-    setIsLoading(true);
+  // Внутренняя функция для обновления балансов (без setIsLoading)
+  const refreshBalancesInternal = useCallback(async (targetWallet: MasterWallet) => {
     try {
       const currentNetworks = getNetworksByMode(networkMode);
       const currentNetworkIds = new Set(currentNetworks.map(n => n.id));
       
       const updatedAccounts = await Promise.all(
-        wallet.accounts.map(async (account) => {
+        targetWallet.accounts.map(async (account) => {
           if (!currentNetworkIds.has(account.network)) {
             return account;
           }
           
           const networkInfo = NETWORKS[account.network];
           if (networkInfo?.isEVM) {
-            const balance = await walletService.getEVMBalance(account.network, account.address);
-            return { ...account, balance };
+            try {
+              const balance = await walletService.getEVMBalance(account.network, account.address);
+              return { ...account, balance };
+            } catch (err) {
+              console.error(`Failed to get balance for ${account.network}:`, err);
+              return account;
+            }
           }
           return account;
         })
       );
 
-      const updatedWallet = { ...wallet, accounts: updatedAccounts };
+      const updatedWallet = { ...targetWallet, accounts: updatedAccounts };
       setWallet(updatedWallet);
       await walletService.saveWalletData(updatedWallet);
     } catch (error) {
       console.error('Failed to refresh balances:', error);
+    }
+  }, [networkMode]);
+
+  // Обновление балансов (публичный API)
+  const refreshBalances = useCallback(async () => {
+    if (!wallet) return;
+
+    setIsLoading(true);
+    try {
+      await refreshBalancesInternal(wallet);
     } finally {
       setIsLoading(false);
     }
-  }, [wallet, networkMode]);
+  }, [wallet, refreshBalancesInternal]);
 
   // Получение аккаунта для выбранной сети
   const getCurrentAccount = useCallback((): WalletAccount | undefined => {
@@ -265,6 +288,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const value = useMemo<WalletContextState>(
     () => ({
       isLoading,
+      isInitializing,
       isInitialized,
       wallet,
       wallets,
@@ -285,30 +309,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       getActiveNetwork,
       deleteWallet,
       revealMnemonic,
-      checkWallet,
     }),
     [
       isLoading,
+      isInitializing,
       isInitialized,
       wallet,
       wallets,
       mnemonic,
       selectedNetwork,
       networkMode,
-      setNetworkMode,
-      toggleNetworkMode,
-      generateNewMnemonic,
-      createWallet,
-      importWallet,
-      switchWallet,
-      renameWallet,
-      refreshBalances,
-      getCurrentAccount,
-      getAccountsForCurrentMode,
-      getActiveNetwork,
-      deleteWallet,
-      revealMnemonic,
-      checkWallet,
     ]
   );
 

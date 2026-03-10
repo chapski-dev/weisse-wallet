@@ -36,7 +36,7 @@ export const SectionListItemWithArrow = ({
       <Box
         w="full"
         minHeight={56}
-        py={16}
+        p={16}
         row
         alignItems={alignItems}
         justifyContent="space-between"

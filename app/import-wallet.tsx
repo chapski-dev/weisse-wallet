@@ -11,24 +11,23 @@ import { useAppTheme } from '@/theme/theme';
 export default function ImportWalletScreen() {
   const router = useRouter();
   const { colors, insets } = useAppTheme();
-  const { importWallet } = useWallet();
+  const { importWallet, wallets } = useWallet();
   const [isImporting, setIsImporting] = useState(false);
 
   const handleImport = async (mnemonic: string) => {
     setIsImporting(true);
     try {
-      await importWallet(mnemonic, 'Импортированный кошелек');
+      await importWallet(mnemonic, `Кошелек ${wallets.length ? wallets.length + 1 : 1}`);
+      
       if (Platform.OS === 'web') {
         window.alert('Кошелек успешно импортирован!');
         router.dismissAll();
       } else {
-        Alert.alert('Готово!', 'Кошелек успешно импортирован', [
-          { text: 'OK', onPress: () => router.dismissAll() },
-        ]);
+        // Перенаправляем на главный экран после успешного импорта
+        router.dismissAll();
       }
-    } catch {
+    } catch (error) {
       Alert.alert('Ошибка', 'Не удалось импортировать кошелек');
-    } finally {
       setIsImporting(false);
     }
   };

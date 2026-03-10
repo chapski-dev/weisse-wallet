@@ -45,14 +45,15 @@ export default function CreateWalletScreen() {
     setStep('creating');
     try {
       await createWallet(generatedMnemonic, 'Мой кошелек');
+      
       if (Platform.OS === 'web') {
+        window.alert('Кошелек успешно создан!');
         router.dismissAll();
       } else {
-        Alert.alert('Готово!', 'Кошелек успешно создан', [
-          { text: 'OK', onPress: () => router.dismissAll() },
-        ]);
+        // Перенаправляем на главный экран после успешного создания
+        router.dismissAll();
       }
-    } catch {
+    } catch (error) {
       Alert.alert('Ошибка', 'Не удалось создать кошелек');
       setStep('backup');
     }
