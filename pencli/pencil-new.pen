@@ -3524,7 +3524,7 @@
           "type": "frame",
           "id": "iG59t",
           "x": 20,
-          "y": 132,
+          "y": 186,
           "name": "Filter Tabs",
           "width": 350,
           "height": 40,
@@ -3622,7 +3622,7 @@
           "type": "frame",
           "id": "QeSFa",
           "x": 20,
-          "y": 188,
+          "y": 242,
           "name": "Summary Card",
           "width": 350,
           "height": 80,
@@ -3653,7 +3653,7 @@
                   "type": "text",
                   "id": "o6Sys",
                   "fill": "#FFFFFF",
-                  "content": "12",
+                  "content": "4",
                   "fontFamily": "Inter",
                   "fontSize": 22,
                   "fontWeight": "700"
@@ -3692,7 +3692,7 @@
                   "type": "text",
                   "id": "RkBom",
                   "fill": "#10B981",
-                  "content": "+5.3824 ETH",
+                  "content": "+1.2500 ETH",
                   "fontFamily": "Inter",
                   "fontSize": 14,
                   "fontWeight": "700"
@@ -3731,7 +3731,7 @@
                   "type": "text",
                   "id": "c42xu",
                   "fill": "#EF4444",
-                  "content": "-2.1500 ETH",
+                  "content": "-0.5010 ETH",
                   "fontFamily": "Inter",
                   "fontSize": 14,
                   "fontWeight": "700"
@@ -3753,7 +3753,7 @@
           "type": "text",
           "id": "Tj88N",
           "x": 20,
-          "y": 284,
+          "y": 338,
           "name": "Group Today",
           "fill": "#6B7280",
           "content": "Сегодня",
@@ -3766,7 +3766,7 @@
           "type": "frame",
           "id": "9wxEN",
           "x": 20,
-          "y": 306,
+          "y": 360,
           "name": "TX Send 1",
           "width": 350,
           "height": 68,
@@ -3944,7 +3944,7 @@
           "type": "frame",
           "id": "Kup1O",
           "x": 76,
-          "y": 374,
+          "y": 428,
           "name": "Divider",
           "width": 294,
           "height": 1,
@@ -3954,7 +3954,7 @@
           "type": "frame",
           "id": "rsUNt",
           "x": 20,
-          "y": 382,
+          "y": 436,
           "name": "TX Receive 1",
           "width": 350,
           "height": 68,
@@ -3972,7 +3972,7 @@
               "name": "tx2Icon",
               "width": 44,
               "height": 44,
-              "fill": "#052E16",
+              "fill": "#0A1E3A",
               "cornerRadius": 12,
               "justifyContent": "center",
               "alignItems": "center",
@@ -3984,7 +3984,7 @@
                   "height": 20,
                   "iconFontName": "arrow-down-left",
                   "iconFontFamily": "lucide",
-                  "fill": "#10B981"
+                  "fill": "#3B82F6"
                 }
               ]
             },
@@ -4008,7 +4008,7 @@
                       "type": "text",
                       "id": "37iGF",
                       "fill": "#F9FAFB",
-                      "content": "Получение SOL",
+                      "content": "Получение ETH",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "600"
@@ -4017,7 +4017,7 @@
                       "type": "text",
                       "id": "EdE40",
                       "fill": "#10B981",
-                      "content": "+0.1000 SOL",
+                      "content": "+1.2500 ETH",
                       "fontFamily": "Inter",
                       "fontSize": 14,
                       "fontWeight": "700"
@@ -4043,7 +4043,7 @@
                           "type": "text",
                           "id": "lN90l",
                           "fill": "#6B7280",
-                          "content": "◎7k8j...m9n0",
+                          "content": "0x7f3a...8b2c",
                           "fontFamily": "Inter",
                           "fontSize": 12,
                           "fontWeight": "normal"
@@ -4052,7 +4052,7 @@
                           "type": "frame",
                           "id": "ZNduR",
                           "name": "netPill2",
-                          "fill": "#0A1A0A",
+                          "fill": "#1E3A5F",
                           "cornerRadius": 4,
                           "padding": [
                             2,
@@ -4063,8 +4063,8 @@
                             {
                               "type": "text",
                               "id": "fqGHS",
-                              "fill": "#10B981",
-                              "content": "◎ SOL",
+                              "fill": "#3B82F6",
+                              "content": "⟠ ETH",
                               "fontFamily": "Inter",
                               "fontSize": 10,
                               "fontWeight": "600"
@@ -4132,7 +4132,7 @@
           "type": "text",
           "id": "Fmz3a",
           "x": 20,
-          "y": 464,
+          "y": 516,
           "name": "Group Yesterday",
           "fill": "#6B7280",
           "content": "Вчера",
@@ -4143,197 +4143,9 @@
         },
         {
           "type": "frame",
-          "id": "BPJKO",
-          "x": 20,
-          "y": 486,
-          "name": "TX Send 2",
-          "width": 350,
-          "height": 68,
-          "cornerRadius": 14,
-          "gap": 12,
-          "padding": [
-            0,
-            4
-          ],
-          "alignItems": "center",
-          "children": [
-            {
-              "type": "frame",
-              "id": "DFHm8",
-              "name": "tx3Icon",
-              "width": 44,
-              "height": 44,
-              "fill": "#1A0A0A",
-              "cornerRadius": 12,
-              "justifyContent": "center",
-              "alignItems": "center",
-              "children": [
-                {
-                  "type": "icon_font",
-                  "id": "E6yaZ",
-                  "width": 20,
-                  "height": 20,
-                  "iconFontName": "arrow-up-right",
-                  "iconFontFamily": "lucide",
-                  "fill": "#EF4444"
-                }
-              ]
-            },
-            {
-              "type": "frame",
-              "id": "9RMkn",
-              "name": "tx3Info",
-              "width": "fill_container",
-              "layout": "vertical",
-              "gap": 4,
-              "children": [
-                {
-                  "type": "frame",
-                  "id": "HaUh1",
-                  "name": "tx3Row1",
-                  "width": "fill_container",
-                  "justifyContent": "space_between",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "text",
-                      "id": "m8vr1",
-                      "fill": "#F9FAFB",
-                      "content": "Отправка POL",
-                      "fontFamily": "Inter",
-                      "fontSize": 14,
-                      "fontWeight": "600"
-                    },
-                    {
-                      "type": "text",
-                      "id": "H9Cmp",
-                      "fill": "#EF4444",
-                      "content": "-100.00 POL",
-                      "fontFamily": "Inter",
-                      "fontSize": 14,
-                      "fontWeight": "700"
-                    }
-                  ]
-                },
-                {
-                  "type": "frame",
-                  "id": "eMfai",
-                  "name": "tx3Row2",
-                  "width": "fill_container",
-                  "justifyContent": "space_between",
-                  "alignItems": "center",
-                  "children": [
-                    {
-                      "type": "frame",
-                      "id": "7W9Ij",
-                      "name": "tx3Row2L",
-                      "gap": 6,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "text",
-                          "id": "yVLYJ",
-                          "fill": "#6B7280",
-                          "content": "0x5e6f...7g8h",
-                          "fontFamily": "Inter",
-                          "fontSize": 12,
-                          "fontWeight": "normal"
-                        },
-                        {
-                          "type": "frame",
-                          "id": "3amUu",
-                          "name": "netPill3",
-                          "fill": "#1A0A2A",
-                          "cornerRadius": 4,
-                          "padding": [
-                            2,
-                            6
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "text",
-                              "id": "rn1No",
-                              "fill": "#A855F7",
-                              "content": "🟣 POL",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "600"
-                            }
-                          ]
-                        }
-                      ]
-                    },
-                    {
-                      "type": "frame",
-                      "id": "ZmWK2",
-                      "name": "tx3Row2R",
-                      "gap": 6,
-                      "alignItems": "center",
-                      "children": [
-                        {
-                          "type": "frame",
-                          "id": "Oy8CI",
-                          "name": "confPill3",
-                          "fill": "#052E16",
-                          "cornerRadius": 4,
-                          "gap": 4,
-                          "padding": [
-                            2,
-                            6
-                          ],
-                          "alignItems": "center",
-                          "children": [
-                            {
-                              "type": "ellipse",
-                              "id": "mXunl",
-                              "fill": "#10B981",
-                              "width": 6,
-                              "height": 6
-                            },
-                            {
-                              "type": "text",
-                              "id": "PX4X0",
-                              "fill": "#10B981",
-                              "content": "Подтверждено",
-                              "fontFamily": "Inter",
-                              "fontSize": 10,
-                              "fontWeight": "500"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "text",
-                          "id": "aqj8U",
-                          "fill": "#4B5563",
-                          "content": "18:45",
-                          "fontFamily": "Inter",
-                          "fontSize": 11,
-                          "fontWeight": "normal"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "frame",
-          "id": "hem5O",
-          "x": 76,
-          "y": 554,
-          "name": "Divider2",
-          "width": 294,
-          "height": 1,
-          "fill": "#1F2937"
-        },
-        {
-          "type": "frame",
           "id": "jQxue",
           "x": 20,
-          "y": 562,
+          "y": 543,
           "name": "TX Pending",
           "width": 350,
           "height": 68,
@@ -4511,7 +4323,7 @@
           "type": "frame",
           "id": "cjNxG",
           "x": 76,
-          "y": 630,
+          "y": 611,
           "name": "Divider3",
           "width": 294,
           "height": 1,
@@ -4521,7 +4333,7 @@
           "type": "frame",
           "id": "Yv3sw",
           "x": 20,
-          "y": 638,
+          "y": 619,
           "name": "TX Failed",
           "width": 350,
           "height": 68,
@@ -4827,6 +4639,214 @@
                       "letterSpacing": 0.5
                     }
                   ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "frame",
+          "id": "FaVjy",
+          "x": 20,
+          "y": 130,
+          "name": "Network Selector",
+          "width": 350,
+          "height": 44,
+          "gap": 8,
+          "alignItems": "center",
+          "children": [
+            {
+              "type": "frame",
+              "id": "6R0zU",
+              "name": "chip_all",
+              "height": 32,
+              "fill": "#161B22",
+              "cornerRadius": 20,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#30363D"
+              },
+              "gap": 6,
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "D9azU",
+                  "name": "t1",
+                  "fill": "#9CA3AF",
+                  "content": "Все сети",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "qqzYE",
+              "name": "chip_eth",
+              "height": 32,
+              "fill": "#3B82F6",
+              "cornerRadius": 20,
+              "gap": 5,
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "UN3fs",
+                  "name": "t2",
+                  "fill": "#FFFFFF",
+                  "content": "Ξ",
+                  "fontFamily": "Inter",
+                  "fontSize": 14,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "cCfxX",
+                  "name": "t3",
+                  "fill": "#FFFFFF",
+                  "content": "Ethereum",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "600"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "ucBRt",
+              "name": "chip_pol",
+              "height": 32,
+              "fill": "#161B22",
+              "cornerRadius": 20,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#30363D"
+              },
+              "gap": 5,
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "826IQ",
+                  "name": "t4",
+                  "fill": "#8247E5",
+                  "content": "◈",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "3Y2bf",
+                  "name": "t5",
+                  "fill": "#9CA3AF",
+                  "content": "Polygon",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "bYRxy",
+              "name": "chip_btc",
+              "height": 32,
+              "fill": "#161B22",
+              "cornerRadius": 20,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#30363D"
+              },
+              "gap": 5,
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "icon_font",
+                  "id": "LQ4OR",
+                  "name": "ico1",
+                  "width": 13,
+                  "height": 13,
+                  "iconFontName": "bitcoin",
+                  "iconFontFamily": "lucide",
+                  "fill": "#F7931A"
+                },
+                {
+                  "type": "text",
+                  "id": "lUIf7",
+                  "name": "t6",
+                  "fill": "#9CA3AF",
+                  "content": "Bitcoin",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "VSiuQ",
+              "name": "chip_sol",
+              "height": 32,
+              "fill": "#161B22",
+              "cornerRadius": 20,
+              "stroke": {
+                "align": "inside",
+                "thickness": 1,
+                "fill": "#30363D"
+              },
+              "gap": 5,
+              "padding": [
+                0,
+                12
+              ],
+              "justifyContent": "center",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "text",
+                  "id": "quqEP",
+                  "name": "t7",
+                  "fill": "#9945FF",
+                  "content": "◎",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "SFMds",
+                  "name": "t8",
+                  "fill": "#9CA3AF",
+                  "content": "Solana",
+                  "fontFamily": "Inter",
+                  "fontSize": 12,
+                  "fontWeight": "500"
                 }
               ]
             }
