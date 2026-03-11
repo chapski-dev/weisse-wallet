@@ -47,6 +47,8 @@ function RootNavigator() {
         <Stack.Screen name="transaction-detail" options={{ headerShown: false }} />
         <Stack.Screen name="nft-detail" options={{ headerShown: false }} />
         <Stack.Screen name="send-nft" options={{ headerShown: false }} />
+        <Stack.Screen name="select-asset" options={{ headerShown: false }} />
+        <Stack.Screen name="select-network" options={{ headerShown: false }} />
       </Stack>
       {isInitialized ? <Redirect href="/(tabs)" /> : <Redirect href="/onboarding" />}
       <WCRequestModal />

@@ -78,8 +78,8 @@ export default function WalletScreen() {
           <AccountCard
             accounts={accounts}
             selectedAccount={currentAccount}
-            onSend={() => router.push('/send')}
-            onReceive={() => router.push('/receive')}
+            onSend={() => router.push({ pathname: '/select-asset', params: { mode: 'send' } })}
+            onReceive={() => router.push({ pathname: '/select-asset', params: { mode: 'receive' } })}
           />
         )}
 

@@ -5,10 +5,9 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInpu
 
 import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
+import { ScreenHeader } from '@/components/ui/layouts/ScreenHeader';
 import { Button } from '@/components/ui/shared/Button';
 import { Input } from '@/components/ui/shared/Input';
-import { ScreenHeader } from '@/components/ui/layouts/ScreenHeader';
-import { NetworkSelector } from '@/components/wallet/network-selector';
 import { NETWORKS } from '@/constants/networks';
 import { useWallet } from '@/providers/wallet-provider';
 import { walletService } from '@/services/wallet-service';
@@ -108,11 +107,8 @@ export default function SendScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}>
         <ScreenHeader title={`Отправить ${network.symbol}`} />
 
-        {/* Network selector */}
-        <NetworkSelector selectedNetwork={selectedNetwork} onSelectNetwork={setSelectedNetwork} />
-
         {/* Available balance */}
-        <Box row justifyContent="center" alignItems="center" mb={24}>
+        <Box row justifyContent="center" alignItems="center" my={24}>
           <Text variant="p3" color="#6B7280">Доступно: </Text>
           <Text variant="p3-semibold" color="#fff">{balance.toFixed(6)} {network.symbol}</Text>
         </Box>

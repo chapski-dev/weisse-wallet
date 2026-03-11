@@ -7,6 +7,7 @@ import { getNetworksByMode } from '@/constants/networks';
 import { useWallet } from '@/providers/wallet-provider';
 import { useAppTheme } from '@/theme/theme';
 import { Network, NetworkMode } from '@/types/wallet';
+import { Box } from '../ui';
 
 // ─── Horizontal chip selector ─────────────────────────────────────────────────
 
@@ -30,19 +31,21 @@ export function NetworkSelector({ selectedNetwork, onSelectNetwork }: NetworkSel
       {networks.map((network) => {
         const isSelected = selectedNetwork === network.id;
         return (
-          <TouchableOpacity
+          <Box
+            row
+            gap={8}
+            px={14}
+            py={8}
+            borderRadius={8}
+            backgroundColor={colors.border}
             key={network.id}
-            style={[
-              styles.chip,
-              { backgroundColor: isSelected ? colors.primary : colors.grey_200 },
-            ]}
             onPress={() => onSelectNetwork(network.id)}
           >
             <TokenIcon symbol={network.symbol} networkId={network.id} size={18} />
             <Text variant="p4-semibold" color={isSelected ? '#fff' : colors.label}>
               {network.name}
             </Text>
-          </TouchableOpacity>
+          </Box>
         );
       })}
     </ScrollView>

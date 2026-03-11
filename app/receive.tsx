@@ -8,14 +8,13 @@ import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
 import { ScreenHeader } from '@/components/ui/layouts/ScreenHeader';
 import { Button } from '@/components/ui/shared/Button';
-import { NetworkSelector } from '@/components/wallet/network-selector';
 import { NETWORKS } from '@/constants/networks';
 import { useWallet } from '@/providers/wallet-provider';
 import { useAppTheme } from '@/theme/theme';
 
 export default function ReceiveScreen() {
-  const { colors, insets } = useAppTheme();
-  const { selectedNetwork, setSelectedNetwork, getCurrentAccount } = useWallet();
+  const { colors } = useAppTheme();
+  const { selectedNetwork, getCurrentAccount } = useWallet();
 
   const account = getCurrentAccount();
   const network = NETWORKS[selectedNetwork];
@@ -39,16 +38,11 @@ export default function ReceiveScreen() {
     } catch {}
   };
 
-  console.log("account.address => ", account.address)
   return (
-    <Box flex backgroundColor={colors.background}>
+    <Box backgroundColor={colors.background}>
       <ScreenHeader title={`Получить ${network.symbol}`} />
-
-      {/* Network selector */}
-      <NetworkSelector selectedNetwork={selectedNetwork} onSelectNetwork={setSelectedNetwork} />
-
       {/* QR container */}
-      <Box alignItems="center" mb={24}>
+      <Box alignItems="center" my={24}>
         <Box
           w={240} h={240} borderRadius={20}
           alignItems="center" justifyContent="center"
@@ -111,7 +105,7 @@ export default function ReceiveScreen() {
           p={12}
         >
           <Ionicons name="warning" size={16} color="#F59E0B" />
-          <Text variant="p4" color="#D97706" flex={1} style={{ lineHeight: 18 }}>
+          <Text variant="p4" color="#D97706" flex={1}>
             Отправляйте только {network.symbol} в сети {network.name}. Отправка других токенов может привести к потере средств.
           </Text>
         </Box>
