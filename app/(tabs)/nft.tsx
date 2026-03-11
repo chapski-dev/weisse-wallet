@@ -5,9 +5,9 @@ import { Animated, FlatList, RefreshControl, ScrollView, StyleSheet, TextInput, 
 
 import { Box } from '@/components/ui/builders/Box';
 import { Text } from '@/components/ui/builders/Text';
-import { MOCK_NFTS, NETWORK_CFG, NFTItem, NFTNetwork, setNFTCache } from '@/constants/nfts';
+import { NETWORK_CFG, NFTItem, NFTNetwork, setNFTCache } from '@/constants/nfts';
 import { useWallet } from '@/providers/wallet-provider';
-import { fetchNFTs, supportsNFTFetch } from '@/services/nft-service';
+import { fetchNFTs } from '@/services/nft-service';
 import { useAppTheme } from '@/theme/theme';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ export default function NFTScreen() {
   const { colors, insets } = useAppTheme();
   const { isInitialized, wallet, networkMode, getActiveNetwork, selectedNetwork } = useWallet();
 
-  const [nfts, setNfts] = useState<NFTItem[]>(MOCK_NFTS);
+  const [nfts, setNfts] = useState<NFTItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<NFTFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,20 +112,9 @@ export default function NFTScreen() {
   const searchHeight = useRef(new Animated.Value(0)).current;
 
   const loadNFTs = useCallback(async (isRefresh = false) => {
-    if (!isInitialized || !wallet) return;
-
-    if (networkMode !== 'testnet') {
-      setNfts(MOCK_NFTS);
-      setNFTCache(MOCK_NFTS);
-      return;
-    }
+    if (!wallet) return;
 
     const activeNetwork = getActiveNetwork(selectedNetwork);
-    if (!supportsNFTFetch(activeNetwork)) {
-      setNfts(MOCK_NFTS);
-      setNFTCache(MOCK_NFTS);
-      return;
-    }
 
     const account = wallet.accounts.find((a) => a.network === activeNetwork);
     if (!account) return;
@@ -133,20 +122,19 @@ export default function NFTScreen() {
     if (isRefresh) setRefreshing(true);
     try {
       const items = await fetchNFTs(activeNetwork, account.address);
-      console.log("items: ", items)
       setNfts(items);
       setNFTCache(items);
     } catch {
-      setNfts(MOCK_NFTS);
-      setNFTCache(MOCK_NFTS);
+      setNfts([]);
+      setNFTCache([]);
     } finally {
       if (isRefresh) setRefreshing(false);
     }
-  }, [isInitialized, wallet, networkMode, selectedNetwork]);
+  }, [wallet, networkMode, selectedNetwork]);
 
   useEffect(() => {
     loadNFTs(false);
-  }, [isInitialized, wallet, networkMode, selectedNetwork]);
+  }, [wallet, networkMode, selectedNetwork]);
 
   const toggleSearch = () => {
     const opening = !showSearch;
@@ -176,15 +164,6 @@ export default function NFTScreen() {
 
     return result;
   }, [activeFilter, searchQuery, sortBy, nfts]);
-
-  if (!isInitialized) {
-    return (
-      <Box flex alignItems="center" justifyContent="center" backgroundColor={colors.background}>
-        <Ionicons name="image-outline" size={48} color="#374151" />
-        <Text variant="p2" colorName="label" center mt={12}>Сначала создайте кошелек</Text>
-      </Box>
-    );
-  }
 
   return (
     <Box backgroundColor={colors.background}>
