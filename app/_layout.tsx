@@ -8,7 +8,7 @@ import { ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import 'react-native-reanimated';
 
-import { Box } from '@/components/ui';
+import { Box, ModalLayout } from '@/components/ui';
 import { WCRequestModal } from '@/components/wallet/wc-request-modal';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useWallet, WalletProvider } from '@/providers/wallet-provider';
@@ -38,7 +38,7 @@ function RootNavigator() {
         <Stack.Screen name="import-wallet" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="send" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="receive" options={{ headerShown: false, presentation: 'modal' }} />
-        <Stack.Screen name="settings" options={{ headerShown: false, presentation: 'modal' }} />
+        <Stack.Screen name="settings" options={{ headerShown: false }} />
         <Stack.Screen name="add-wallet" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="wc-connect" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="wc-pay" options={{ headerShown: false, presentation: 'modal' }} />
@@ -63,6 +63,7 @@ export default function RootLayout() {
         <BottomSheetModalProvider>
           <WalletProvider>
             <RootNavigator />
+            <ModalLayout />
             <StatusBar style="auto" />
           </WalletProvider>
         </BottomSheetModalProvider>
