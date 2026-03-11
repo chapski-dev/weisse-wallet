@@ -184,29 +184,19 @@ export const Button: FC<PropsType> = ({
   }, [width])
 
   const buttonContent = useMemo(() => (
-    <>
-      {loading ? <ActivityIndicator color={colors.text} /> : <Box alignItems="center" row gap={6}>
+    loading ? <ActivityIndicator color={colors.text} /> :
+      <Box alignItems="center" row gap={6}>
         <Text
-          style={[{ color: _textColor, fontSize: 16, fontWeight: '600' }, textStyle]}
+          style={[{
+            color: _textColor,
+            fontSize: 16,
+            fontWeight: '600'
+          }, textStyle]}
           children={children}
         />
         {icon}
-      </Box>}
-      {type === 'filled' && (
-        <Animated.View
-          style={{
-            backgroundColor: colors.black,
-            bottom: 0,
-            left: 0,
-            opacity: overlayOpacity,
-            position: 'absolute',
-            right: 0,
-            top: 0,
-          }}
-        />
-      )}
-    </>
-  ), [_textColor, children, colors.background, colors.black, icon, loading, overlayOpacity, textStyle, type])
+      </Box>
+  ), [_textColor, children, colors.text, icon, loading, textStyle,])
 
   return (
     <View style={[styles.wrapper, wrapperStyle]}>
@@ -219,6 +209,17 @@ export const Button: FC<PropsType> = ({
             onPressIn={handlePressIn}
             onPressOut={handlePressOut}>
             {buttonContent}
+            <Animated.View
+              style={{
+                backgroundColor: colors.black,
+                bottom: 0,
+                left: 0,
+                right: 0,
+                top: 0,
+                opacity: overlayOpacity,
+                position: 'absolute',
+              }}
+            />
           </Pressable>
         ) : (
           <TouchableHighlight
