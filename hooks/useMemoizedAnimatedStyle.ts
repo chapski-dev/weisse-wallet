@@ -1,9 +1,9 @@
-import { useMemo } from 'react'
-import { ViewStyle } from 'react-native'
-import { useAnimatedStyle } from 'react-native-reanimated'
+import { useMemo } from "react";
+import type { ViewStyle } from "react-native";
+import { useAnimatedStyle } from "react-native-reanimated";
 
 export const useMemoizedAnimatedStyle = (cb: () => ViewStyle) => {
-  const style = useAnimatedStyle(cb)
+	const style = useAnimatedStyle(cb);
 
-  return useMemo(() => style, [cb])
-}
+	return useMemo(() => style, [cb]);
+};

@@ -1,9 +1,14 @@
-import { useAppTheme } from '@/theme/theme';
-import { Href, Link } from 'expo-router';
-import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import { type ComponentProps } from 'react';
+import { type Href, Link } from "expo-router";
+import {
+	openBrowserAsync,
+	WebBrowserPresentationStyle,
+} from "expo-web-browser";
+import type { ComponentProps } from "react";
+import { useAppTheme } from "@/theme/theme";
 
-type Props = Omit<ComponentProps<typeof Link>, 'href'> & { href: Href & string };
+type Props = Omit<ComponentProps<typeof Link>, "href"> & {
+	href: Href & string;
+};
 
 /**
  * Компонент для открытия внешних ссылок.
@@ -20,23 +25,23 @@ type Props = Omit<ComponentProps<typeof Link>, 'href'> & { href: Href & string }
  * ```
  */
 export function ExternalLink({ href, ...rest }: Props) {
-  const them = useAppTheme();
-  return (
-    <Link
-      target="_blank"
-      {...rest}
-      href={href}
-      style={{ color: them.colors.text }}
-      onPress={async (event) => {
-        if (process.env.EXPO_OS !== 'web') {
-          // Prevent the default behavior of linking to the default browser on native.
-          event.preventDefault();
-          // Open the link in an in-app browser.
-          await openBrowserAsync(href, {
-            presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
-          });
-        }
-      }}
-    />
-  );
+	const them = useAppTheme();
+	return (
+		<Link
+			target="_blank"
+			{...rest}
+			href={href}
+			style={{ color: them.colors.text }}
+			onPress={async (event) => {
+				if (process.env.EXPO_OS !== "web") {
+					// Prevent the default behavior of linking to the default browser on native.
+					event.preventDefault();
+					// Open the link in an in-app browser.
+					await openBrowserAsync(href, {
+						presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
+					});
+				}
+			}}
+		/>
+	);
 }
