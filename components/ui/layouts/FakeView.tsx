@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import Animated, { useAnimatedKeyboard } from "react-native-reanimated";
 
 import { useMemoizedAnimatedStyle } from "@/hooks/useMemoizedAnimatedStyle";
@@ -23,7 +23,7 @@ export const FakeView = ({
 					? Math.abs(height.value ? height.value + insets.bottom : 0)
 					: Math.abs(height.value) + (additionalOffset || 0),
 			};
-		}, [calcWithInsets, height, additionalOffset]),
+		}, [calcWithInsets, height, additionalOffset, insets.bottom]),
 	);
 
 	return isIOS ? <Animated.View style={fakeView} /> : null;

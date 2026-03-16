@@ -30,7 +30,7 @@ export const Accordion: FC<AccordionProps> = ({
 
 	const _onPress = () => {
 		isOpen.value = !isOpen.value;
-		onPress && onPress(!open);
+		onPress?.(!open);
 	};
 
 	const arrowStyle = useAnimatedStyle(() => ({

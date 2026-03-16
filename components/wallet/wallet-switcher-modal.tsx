@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TouchableOpacity } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

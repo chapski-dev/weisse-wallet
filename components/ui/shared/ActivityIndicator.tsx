@@ -44,7 +44,7 @@ export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({
 				{ length: frames },
 				(_, i) => i / (frames - 1),
 			);
-			const outputRange = inputRange.map((t) => easingFn(t) * 360 + "deg");
+			const outputRange = inputRange.map((t) => `${easingFn(t) * 360}deg`);
 
 			const layerStyle = {
 				transform: [
@@ -78,7 +78,7 @@ export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({
 				</Animated.View>
 			);
 		},
-		[animationDuration, color, size, minScale, maxScale],
+		[color, size, minScale, maxScale],
 	);
 
 	return (
@@ -122,26 +122,7 @@ const Indicator: React.FC<IndicatorProps> = ({
 	const animationState = useRef<0 | 1 | -1>(0);
 	const savedValue = useRef(0);
 
-	useEffect(() => {
-		if (animating) startAnimation();
-		return stopAnimation;
-	}, []);
-
-	useEffect(() => {
-		Animated.timing(hideAnimation, {
-			duration: hideAnimationDuration,
-			toValue: animating ? 1 : 0,
-			useNativeDriver: true,
-		}).start();
-
-		if (animating && animationState.current !== 1) {
-			resumeAnimation();
-		} else if (!animating && animationState.current === 1) {
-			stopAnimation();
-		}
-	}, [animating]);
-
-	const startAnimation = () => {
+	const startAnimation = useCallback(() => {
 		if (animationState.current !== 0) return;
 
 		const animation = Animated.timing(progress, {
@@ -154,9 +135,9 @@ const Indicator: React.FC<IndicatorProps> = ({
 
 		Animated.loop(animation).start();
 		animationState.current = 1;
-	};
+	}, [animationDuration, animationEasing, interaction, progress]);
 
-	const stopAnimation = () => {
+	const stopAnimation = useCallback(() => {
 		if (animationState.current !== 1) return;
 
 		const listener = progress.addListener(({ value }) => {
@@ -168,9 +149,9 @@ const Indicator: React.FC<IndicatorProps> = ({
 		});
 
 		animationState.current = -1;
-	};
+	}, [progress]);
 
-	const resumeAnimation = () => {
+	const resumeAnimation = useCallback(() => {
 		if (animationState.current !== 0) return;
 
 		Animated.timing(progress, {
@@ -188,7 +169,32 @@ const Indicator: React.FC<IndicatorProps> = ({
 
 		savedValue.current = 0;
 		animationState.current = 1;
-	};
+	}, [animationDuration, interaction, progress, startAnimation]);
+
+	useEffect(() => {
+		if (animating) startAnimation();
+		return stopAnimation;
+	}, [animating, startAnimation, stopAnimation]);
+
+	useEffect(() => {
+		Animated.timing(hideAnimation, {
+			duration: hideAnimationDuration,
+			toValue: animating ? 1 : 0,
+			useNativeDriver: true,
+		}).start();
+
+		if (animating && animationState.current !== 1) {
+			resumeAnimation();
+		} else if (!animating && animationState.current === 1) {
+			stopAnimation();
+		}
+	}, [
+		animating,
+		hideAnimation,
+		hideAnimationDuration,
+		resumeAnimation,
+		stopAnimation,
+	]);
 
 	return (
 		<Animated.View style={[style, { opacity: hideAnimation }]}>

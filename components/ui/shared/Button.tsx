@@ -1,5 +1,5 @@
 import { merge } from "lodash";
-import React, { type FC, type ReactNode, useMemo, useRef } from "react";
+import { type FC, type ReactNode, useMemo, useRef } from "react";
 import {
 	ActivityIndicator,
 	Animated,

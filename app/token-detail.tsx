@@ -212,7 +212,7 @@ function fmtDate(ts: number) {
 
 function fmtVal(v: string, dec = 4) {
 	const n = parseFloat(v);
-	if (isNaN(n) || n === 0) return "0";
+	if (Number.isNaN(n) || n === 0) return "0";
 	return n.toFixed(dec).replace(/\.?0+$/, "");
 }
 
@@ -469,8 +469,8 @@ export default function TokenDetailScreen() {
 
 				{/* Axis labels */}
 				<Box row justifyContent="space-between" px={20} mt={2}>
-					{axisLabels.map((lbl, i) => (
-						<Text key={i} variant="label" color="#4A4A6A">
+					{axisLabels.map((lbl) => (
+						<Text key={lbl} variant="label" color="#4A4A6A">
 							{lbl}
 						</Text>
 					))}
@@ -695,7 +695,7 @@ export default function TokenDetailScreen() {
 					) : (
 						txs.map((tx, i) => (
 							<TxRow
-								key={`${tx.hash}-${i}`}
+								key={tx.hash}
 								tx={tx}
 								symbol={network.symbol}
 								isLast={i === txs.length - 1}

@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Animated, {
 	useAnimatedStyle,

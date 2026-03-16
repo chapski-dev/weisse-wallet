@@ -8,5 +8,8 @@ export function useStyles<T, TProps extends any[]>(
 ): T {
 	const theme: App.Theme = useAppTheme();
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	return useMemo(() => styles(theme, ...props), [styles, theme, ...props]);
+	return useMemo(
+		() => styles(theme, ...props),
+		[styles, theme, ...props, props],
+	);
 }

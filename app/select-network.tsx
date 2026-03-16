@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	FlatList,
 	Image,
@@ -13,7 +13,6 @@ import { Box } from "@/components/ui/builders/Box";
 import { Text } from "@/components/ui/builders/Text";
 import { ScreenHeader } from "@/components/ui/layouts/ScreenHeader";
 import { getNetworkIconUrl, getTokenIconUrl } from "@/constants/tokens";
-import { useWallet } from "@/providers/wallet-provider";
 import { useAppTheme } from "@/theme/theme";
 import { Network } from "@/types/wallet";
 
@@ -147,7 +146,6 @@ const NETWORK_MAP: Partial<Record<string, Network>> = {
 export default function SelectNetworkScreen() {
 	const router = useRouter();
 	const { colors } = useAppTheme();
-	const { setSelectedNetwork } = useWallet();
 	const { token = "USDT", mode = "receive" } = useLocalSearchParams<{
 		token?: string;
 		mode?: string;
@@ -157,8 +155,10 @@ export default function SelectNetworkScreen() {
 
 	const handleSelectNetwork = (item: NetworkItem) => {
 		const network = NETWORK_MAP[item.id];
-		if (network) setSelectedNetwork(network);
-		router.replace(mode === "send" ? "/send" : "/receive");
+		router.replace({
+			pathname: mode === "send" ? "/send" : "/receive",
+			params: network ? { network } : {},
+		});
 	};
 
 	return (

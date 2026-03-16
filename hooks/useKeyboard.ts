@@ -30,13 +30,16 @@ export function useKeyboard() {
 	const handleKeyboardWillShow: KeyboardEventListener = useCallback((e) => {
 		setCoordinates({ end: e.endCoordinates, start: e.startCoordinates });
 	}, []);
-	const handleKeyboardDidShow: KeyboardEventListener = useCallback((e) => {
-		setShown(true);
-		setCoordinates({ end: e.endCoordinates, start: e.startCoordinates });
-		setKeyboardHeight(e.endCoordinates.height);
-		keyboardHeightSV.value = e.endCoordinates.height;
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	const handleKeyboardDidShow: KeyboardEventListener = useCallback(
+		(e) => {
+			setShown(true);
+			setCoordinates({ end: e.endCoordinates, start: e.startCoordinates });
+			setKeyboardHeight(e.endCoordinates.height);
+			keyboardHeightSV.value = e.endCoordinates.height;
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+		},
+		[keyboardHeightSV],
+	);
 	const handleKeyboardWillHide: KeyboardEventListener = useCallback((e) => {
 		setCoordinates({ end: e.endCoordinates, start: e.startCoordinates });
 	}, []);
@@ -59,10 +62,15 @@ export function useKeyboard() {
 		];
 
 		return () => {
-			subscriptions.forEach((subscription) => subscription.remove());
+			for (const subscription of subscriptions) subscription.remove();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [
+		handleKeyboardDidHide,
+		handleKeyboardDidShow,
+		handleKeyboardWillHide,
+		handleKeyboardWillShow,
+	]);
 
 	return {
 		coordinates,

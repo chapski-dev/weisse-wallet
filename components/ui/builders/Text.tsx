@@ -1,4 +1,4 @@
-import React, { type FC, useMemo } from "react";
+import { type FC, useMemo } from "react";
 import {
 	Text as RNText,
 	type TextProps as RNTextProps,

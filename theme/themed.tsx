@@ -56,9 +56,11 @@ function ViewWithRef(
 		onLongPress,
 		...otherProps
 	} = props;
+	// biome-ignore lint/correctness/useHookAtTopLevel: ViewWithRef is a forwardRef component
 	const theme = useAppTheme();
 	const key = colorName || (theme.dark ? darkColorName : lightColorName);
 
+	// biome-ignore lint/correctness/useHookAtTopLevel: ViewWithRef is a forwardRef component
 	const styles = useMemo(
 		() => [
 			{
@@ -70,6 +72,7 @@ function ViewWithRef(
 		[key, theme.colors, relative, absolute, style],
 	);
 
+	// biome-ignore lint/correctness/useHookAtTopLevel: ViewWithRef is a forwardRef component
 	const Component = useMemo(() => {
 		if (onLongPress || onPress) {
 			switch (effect) {

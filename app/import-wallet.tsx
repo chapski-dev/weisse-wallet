@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	Alert,
 	Platform,
@@ -36,7 +36,7 @@ export default function ImportWalletScreen() {
 				// Перенаправляем на главный экран после успешного импорта
 				router.dismissAll();
 			}
-		} catch (error) {
+		} catch (_error) {
 			Alert.alert("Ошибка", "Не удалось импортировать кошелек");
 			setIsImporting(false);
 		}

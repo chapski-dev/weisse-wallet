@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Image } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

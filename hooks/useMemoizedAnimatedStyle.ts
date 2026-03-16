@@ -5,5 +5,5 @@ import { useAnimatedStyle } from "react-native-reanimated";
 export const useMemoizedAnimatedStyle = (cb: () => ViewStyle) => {
 	const style = useAnimatedStyle(cb);
 
-	return useMemo(() => style, [cb]);
+	return useMemo(() => style, [style]);
 };

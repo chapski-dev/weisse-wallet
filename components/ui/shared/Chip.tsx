@@ -1,4 +1,4 @@
-import React, { type PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import type { StyleProp, ViewStyle } from "react-native";
 
 import { useAppTheme } from "@/theme/theme";

@@ -1,13 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { WalletKitTypes } from "@reown/walletkit";
-import React from "react";
-import {
-	Image,
-	Modal,
-	ScrollView,
-	StyleSheet,
-	TouchableOpacity,
-} from "react-native";
+import { Image, Modal, ScrollView, StyleSheet } from "react-native";
 import { Box } from "@/components/ui/builders/Box";
 import { Text } from "@/components/ui/builders/Text";
 import { Button } from "@/components/ui/shared/Button";

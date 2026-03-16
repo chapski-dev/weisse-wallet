@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as Clipboard from "expo-clipboard";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, TextInput, TouchableOpacity } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

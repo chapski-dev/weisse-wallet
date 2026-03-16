@@ -1,4 +1,3 @@
-import React from "react";
 import { ScrollView, StyleSheet } from "react-native";
 
 import { NetworkModeToggle } from "@/components/settings/widgets/network-mode-toggle";

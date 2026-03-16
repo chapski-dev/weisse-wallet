@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert, Platform, StyleSheet } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

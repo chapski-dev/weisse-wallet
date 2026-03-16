@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert, Linking, TextInput, TouchableOpacity } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

@@ -375,6 +375,39 @@ class WalletService {
 		return hash;
 	}
 
+	// Оценка комиссии EVM транзакции
+	async estimateEVMFee(
+		network: Network,
+		from: string,
+		to: string,
+		value: string,
+	): Promise<number> {
+		const networkInfo = NETWORKS[network];
+		const chain = this.getViemChain(network);
+		const client = createPublicClient({
+			chain,
+			transport: http(networkInfo.rpcUrl),
+		});
+
+		const [gasLimit, feesPerGas] = await Promise.all([
+			client.estimateGas({
+				account: from as `0x${string}`,
+				to: to as `0x${string}`,
+				value: parseEther(value),
+			}),
+			client.estimateFeesPerGas().catch(() => null),
+		]);
+
+		let gasPrice: bigint;
+		if (feesPerGas?.maxFeePerGas) {
+			gasPrice = feesPerGas.maxFeePerGas;
+		} else {
+			gasPrice = await client.getGasPrice();
+		}
+
+		return parseFloat(formatEther(gasLimit * gasPrice));
+	}
+
 	// Сохранение данных кошелька
 	async saveWalletData(wallet: MasterWallet): Promise<void> {
 		await secureStorage.setItemAsync(WALLET_DATA_KEY, JSON.stringify(wallet));

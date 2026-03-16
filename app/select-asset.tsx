@@ -1,13 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { FlatList, ScrollView, StyleSheet, TextInput } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";
 import { Text } from "@/components/ui/builders/Text";
 import { ScreenHeader } from "@/components/ui/layouts/ScreenHeader";
 import { TokenIcon } from "@/components/wallet/token-icon";
-import { useWallet } from "@/providers/wallet-provider";
 import { useAppTheme } from "@/theme/theme";
 import { Network } from "@/types/wallet";
 
@@ -103,7 +102,6 @@ const TOKEN_TO_NETWORK: Partial<Record<string, Network>> = {
 export default function SelectAssetScreen() {
 	const router = useRouter();
 	const { colors } = useAppTheme();
-	const { setSelectedNetwork } = useWallet();
 	const { mode = "receive" } = useLocalSearchParams<{ mode?: string }>();
 	const [search, setSearch] = useState("");
 	const [activeFilter, setActiveFilter] = useState("all");
@@ -137,8 +135,10 @@ export default function SelectAssetScreen() {
 			});
 		} else {
 			const network = TOKEN_TO_NETWORK[token.symbol];
-			if (network) setSelectedNetwork(network);
-			router.replace(mode === "send" ? "/send" : "/receive");
+			router.replace({
+				pathname: mode === "send" ? "/send" : "/receive",
+				params: network ? { network } : {},
+			});
 		}
 	};
 

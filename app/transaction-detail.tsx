@@ -20,7 +20,7 @@ import type { Network } from "@/types/wallet";
 
 function formatValue(value: string, decimals = 5): string {
 	const n = parseFloat(value);
-	if (isNaN(n) || n === 0) return "0";
+	if (Number.isNaN(n) || n === 0) return "0";
 	if (n < 0.000001) return "< 0.000001";
 	return n.toFixed(decimals).replace(/\.?0+$/, "");
 }

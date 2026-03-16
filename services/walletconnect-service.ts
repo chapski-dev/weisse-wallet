@@ -88,7 +88,7 @@ class WalletConnectService {
 
 	async pair(uri: string): Promise<void> {
 		await this.init();
-		await this.walletKit!.pair({ uri });
+		await this.walletKit?.pair({ uri });
 	}
 
 	async approveSession(
@@ -111,11 +111,11 @@ class WalletConnectService {
 			},
 		});
 
-		await this.walletKit!.approveSession({ id: proposal.id, namespaces });
+		await this.walletKit?.approveSession({ id: proposal.id, namespaces });
 	}
 
 	async rejectSession(proposal: WalletKitTypes.SessionProposal): Promise<void> {
-		await this.walletKit!.rejectSession({
+		await this.walletKit?.rejectSession({
 			id: proposal.id,
 			reason: getSdkError("USER_REJECTED"),
 		});
@@ -126,14 +126,14 @@ class WalletConnectService {
 		id: number,
 		result: unknown,
 	): Promise<void> {
-		await this.walletKit!.respondSessionRequest({
+		await this.walletKit?.respondSessionRequest({
 			topic,
 			response: { id, result, jsonrpc: "2.0" },
 		});
 	}
 
 	async respondError(topic: string, id: number): Promise<void> {
-		await this.walletKit!.respondSessionRequest({
+		await this.walletKit?.respondSessionRequest({
 			topic,
 			response: {
 				id,
@@ -144,7 +144,7 @@ class WalletConnectService {
 	}
 
 	async disconnectSession(topic: string): Promise<void> {
-		await this.walletKit!.disconnectSession({
+		await this.walletKit?.disconnectSession({
 			topic,
 			reason: getSdkError("USER_DISCONNECTED"),
 		});
@@ -159,7 +159,7 @@ class WalletConnectService {
 
 	async getPaymentOptions(paymentLink: string, accounts: string[]) {
 		await this.init();
-		return this.walletKit!.pay.getPaymentOptions({
+		return this.walletKit?.pay.getPaymentOptions({
 			paymentLink,
 			accounts,
 			includePaymentInfo: true,
@@ -167,7 +167,7 @@ class WalletConnectService {
 	}
 
 	async getRequiredPaymentActions(paymentId: string, optionId: string) {
-		return this.walletKit!.pay.getRequiredPaymentActions({
+		return this.walletKit?.pay.getRequiredPaymentActions({
 			paymentId,
 			optionId,
 		});
@@ -178,7 +178,7 @@ class WalletConnectService {
 		optionId: string,
 		signatures: string[],
 	) {
-		return this.walletKit!.pay.confirmPayment({
+		return this.walletKit?.pay.confirmPayment({
 			paymentId,
 			optionId,
 			signatures,

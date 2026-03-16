@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useCallback } from "react";
+import { useCallback } from "react";
 import { StyleSheet } from "react-native";
 import { Box, SectionListItemWithArrow, Text } from "@/components/ui";
 import { modal } from "@/components/ui/layouts/ModalLayout";

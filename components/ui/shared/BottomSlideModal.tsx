@@ -3,7 +3,7 @@ import {
 	BottomSheetModal,
 	type BottomSheetModalProps,
 } from "@gorhom/bottom-sheet";
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import { Keyboard } from "react-native";
 import { useReducedMotion } from "react-native-reanimated";
 

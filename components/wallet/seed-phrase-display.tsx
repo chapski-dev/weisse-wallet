@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
-import React, { useState } from "react";
+import { useState } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 
 import { Text } from "@/components/ui/builders/Text";
@@ -52,6 +52,7 @@ export function SeedPhraseDisplay({
 			{/* 3-column grid */}
 			<View style={styles.grid}>
 				{[col1, col2, col3].map((col, colIdx) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: columns are fixed-position
 					<View key={colIdx} style={styles.col}>
 						{col.map((word, rowIdx) => {
 							const index = colIdx * 4 + rowIdx + 1;

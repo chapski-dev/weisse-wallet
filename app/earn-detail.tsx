@@ -193,7 +193,7 @@ export default function EarnDetailScreen() {
 	const fmt = (n: number) =>
 		n >= 100 ? `$${Math.round(n)}` : `$${n.toFixed(2)}`;
 	const fmtEth = (n: number) =>
-		`${n < 0.001 ? (n * 1000).toFixed(3) + "m" : n.toFixed(4)} ETH`;
+		`${n < 0.001 ? `${(n * 1000).toFixed(3)}m` : n.toFixed(4)} ETH`;
 
 	const handleStake = () => {
 		router.push({ pathname: "/send", params: { type: "stake", protocol: id } });
@@ -336,7 +336,8 @@ export default function EarnDetailScreen() {
 								onChangeText={(text) => {
 									setInputValue(text);
 									const parsed = parseFloat(text);
-									if (!isNaN(parsed) && parsed >= 0) setAmountEth(parsed);
+									if (!Number.isNaN(parsed) && parsed >= 0)
+										setAmountEth(parsed);
 								}}
 								keyboardType="decimal-pad"
 								placeholder="0"

@@ -1,10 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
 	ActivityIndicator,
 	Image,
-	Modal,
 	ScrollView,
 	StyleSheet,
 	TouchableOpacity,
@@ -136,20 +135,6 @@ export default function WCPayScreen() {
 		})();
 	}, [paymentLink]);
 
-	// Подтвердить оплату
-	const handleConfirm = useCallback(async () => {
-		if (!paymentData || !selectedOption) return;
-
-		// Если нужно собрать данные через WebView — показываем его
-		if (selectedOption.collectData?.url) {
-			setWebViewUrl(selectedOption.collectData.url);
-			setStep("webview");
-			return;
-		}
-
-		await executePayment();
-	}, [paymentData, selectedOption]);
-
 	const executePayment = useCallback(async () => {
 		if (!paymentData || !selectedOption) return;
 		setStep("confirming");
@@ -210,6 +195,20 @@ export default function WCPayScreen() {
 			setStep("error");
 		}
 	}, [paymentData, selectedOption]);
+
+	// Подтвердить оплату
+	const handleConfirm = useCallback(async () => {
+		if (!paymentData || !selectedOption) return;
+
+		// Если нужно собрать данные через WebView — показываем его
+		if (selectedOption.collectData?.url) {
+			setWebViewUrl(selectedOption.collectData.url);
+			setStep("webview");
+			return;
+		}
+
+		await executePayment();
+	}, [paymentData, selectedOption, executePayment]);
 
 	// WebView сообщение о завершении сбора данных
 	const handleWebViewMessage = useCallback(

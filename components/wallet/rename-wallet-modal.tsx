@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { type BottomSheetModal, BottomSheetView } from "@gorhom/bottom-sheet";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TextInput, TouchableOpacity } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
-import React from "react";
+import { useLocalSearchParams } from "expo-router";
 import { Alert, Share } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
@@ -11,13 +11,20 @@ import { Button } from "@/components/ui/shared/Button";
 import { NETWORKS } from "@/constants/networks";
 import { useWallet } from "@/providers/wallet-provider";
 import { useAppTheme } from "@/theme/theme";
+import { Network } from "@/types/wallet";
 
 export default function ReceiveScreen() {
 	const { colors } = useAppTheme();
-	const { selectedNetwork, getCurrentAccount } = useWallet();
+	const { wallet, getActiveNetwork } = useWallet();
+	const { network: networkParam } = useLocalSearchParams<{
+		network?: string;
+	}>();
 
-	const account = getCurrentAccount();
-	const network = NETWORKS[selectedNetwork];
+	const activeNetwork = getActiveNetwork(
+		(networkParam as Network) ?? Network.ETHEREUM,
+	);
+	const network = NETWORKS[activeNetwork];
+	const account = wallet?.accounts.find((a) => a.network === activeNetwork);
 
 	if (!account) {
 		return (

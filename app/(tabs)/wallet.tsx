@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	RefreshControl,
 	ScrollView,
@@ -22,7 +22,6 @@ export default function WalletScreen() {
 		isLoading,
 		wallet,
 		networkMode,
-		getCurrentAccount,
 		getAccountsForCurrentMode,
 		refreshBalances,
 	} = useWallet();
@@ -30,8 +29,8 @@ export default function WalletScreen() {
 	const [switcherVisible, setSwitcherVisible] = useState(false);
 
 	const isTestnet = networkMode === "testnet";
-	const currentAccount = getCurrentAccount();
 	const accounts = getAccountsForCurrentMode();
+	const currentAccount = accounts[0];
 
 	return (
 		<>

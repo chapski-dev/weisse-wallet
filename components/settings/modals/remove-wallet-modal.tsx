@@ -1,5 +1,4 @@
 import { useRouter } from "expo-router";
-import React from "react";
 import { Alert } from "react-native";
 import { Box, Button, Text } from "@/components/ui";
 import { modal } from "@/components/ui/layouts/ModalLayout";

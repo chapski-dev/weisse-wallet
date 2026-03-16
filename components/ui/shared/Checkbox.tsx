@@ -25,7 +25,7 @@ const Checkbox = ({
 
 	const _handlePress = () => {
 		Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-		onPress && onPress();
+		onPress?.();
 	};
 
 	return (

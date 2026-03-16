@@ -1,6 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
 import { StyleSheet, TouchableOpacity } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";

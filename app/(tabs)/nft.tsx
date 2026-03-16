@@ -23,6 +23,7 @@ import {
 import { useWallet } from "@/providers/wallet-provider";
 import { fetchNFTs } from "@/services/nft-service";
 import { useAppTheme } from "@/theme/theme";
+import { Network } from "@/types/wallet";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -140,13 +141,8 @@ function EmptyState({ hasQuery }: { hasQuery: boolean }) {
 export default function NFTScreen() {
 	const router = useRouter();
 	const { colors, insets } = useAppTheme();
-	const {
-		isInitialized,
-		wallet,
-		networkMode,
-		getActiveNetwork,
-		selectedNetwork,
-	} = useWallet();
+	const { wallet, getActiveNetwork } = useWallet();
+	const [selectedNetwork] = useState(Network.ETHEREUM);
 
 	const [nfts, setNfts] = useState<NFTItem[]>([]);
 	const [refreshing, setRefreshing] = useState(false);
@@ -179,12 +175,12 @@ export default function NFTScreen() {
 				if (isRefresh) setRefreshing(false);
 			}
 		},
-		[wallet, networkMode, selectedNetwork],
+		[wallet, getActiveNetwork, selectedNetwork],
 	);
 
 	useEffect(() => {
 		loadNFTs(false);
-	}, [wallet, networkMode, selectedNetwork]);
+	}, [loadNFTs]);
 
 	const toggleSearch = () => {
 		const opening = !showSearch;

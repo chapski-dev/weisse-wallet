@@ -1,5 +1,5 @@
 import * as Clipboard from "expo-clipboard";
-import React, { useState } from "react";
+import { useState } from "react";
 import {
 	Alert,
 	StyleSheet,
@@ -75,6 +75,7 @@ export function SeedPhraseInput({ onValidPhrase }: SeedPhraseInputProps) {
 
 			<View style={styles.wordsContainer}>
 				{words.map((word, index) => (
+					// biome-ignore lint/suspicious/noArrayIndexKey: word inputs can be duplicate
 					<View key={index} style={styles.wordInputContainer}>
 						<Text style={styles.wordNumber}>{index + 1}</Text>
 						<TextInput
