@@ -88,16 +88,23 @@ export default function SendScreen() {
 	}
 
 	const isEVMNetwork = network.isEVM;
+	const isStellar =
+		activeNetwork === Network.STELLAR ||
+		activeNetwork === Network.STELLAR_TESTNET;
+	const STELLAR_FEE = 0.00001; // 100 stroops
 	const balance = parseFloat(account.balance);
 	const canSend = !!recipient && !!amount;
 	const feeDisplay = isEVMNetwork
 		? isEstimatingFee
 			? "..."
 			: `~${estimatedFeeEth.toFixed(6)} ${network.symbol}`
-		: null;
+		: isStellar
+			? `${STELLAR_FEE} ${network.symbol}`
+			: null;
 
 	const validateAddress = (address: string) => {
 		if (isEVMNetwork) return /^0x[a-fA-F0-9]{40}$/.test(address);
+		if (isStellar) return /^G[A-Z2-7]{55}$/.test(address);
 		return address.length > 20;
 	};
 
@@ -129,6 +136,44 @@ export default function SendScreen() {
 
 	const executeSend = async () => {
 		previewRef.current?.dismiss();
+
+		if (isStellar) {
+			setIsSending(true);
+			try {
+				const txHash = await walletService.sendStellarTransaction(
+					activeNetwork,
+					recipient,
+					amount,
+				);
+				Alert.alert(
+					"Успешно!",
+					`Транзакция отправлена\nHash: ${txHash.slice(0, 16)}...`,
+					[
+						{
+							text: "OK",
+							onPress: () => {
+								refreshBalances();
+								router.back();
+							},
+						},
+					],
+				);
+			} catch (error: unknown) {
+				const msg = error instanceof Error ? error.message : "";
+				const friendlyMessage = msg.includes("op_underfunded")
+					? "Недостаточно XLM"
+					: msg.includes("tx_bad_seq")
+						? "Ошибка последовательности. Повторите попытку."
+						: msg.includes("not found")
+							? "Аккаунт не найден. Пополните баланс (минимум 1 XLM)."
+							: "Не удалось отправить транзакцию";
+				Alert.alert("Ошибка", friendlyMessage);
+			} finally {
+				setIsSending(false);
+			}
+			return;
+		}
+
 		if (!isEVMNetwork) {
 			Alert.alert(
 				"Ошибка",
@@ -156,8 +201,8 @@ export default function SendScreen() {
 					},
 				],
 			);
-		} catch (error: any) {
-			const msg: string = error.message ?? "";
+		} catch (error: unknown) {
+			const msg = error instanceof Error ? error.message : "";
 			const friendlyMessage = msg.includes("insufficient funds")
 				? "Недостаточно средств для оплаты транзакции с учётом комиссии"
 				: msg.includes("rejected") || msg.includes("denied")
@@ -232,7 +277,9 @@ export default function SendScreen() {
 							<Input
 								value={recipient}
 								onChangeText={setRecipient}
-								placeholder={isEVMNetwork ? "0x..." : "Введите адрес"}
+								placeholder={
+								isEVMNetwork ? "0x..." : isStellar ? "G..." : "Введите адрес"
+							}
 								autoCapitalize="none"
 								autoCorrect={false}
 								icon={
@@ -262,7 +309,9 @@ export default function SendScreen() {
 											String(
 												isEVMNetwork
 													? Math.max(0, balance - estimatedFeeEth)
-													: balance,
+													: isStellar
+														? Math.max(0, balance - STELLAR_FEE)
+														: balance,
 											),
 										)
 									}
@@ -304,7 +353,7 @@ export default function SendScreen() {
 						</Box>
 
 						{/* Fee */}
-						{isEVMNetwork && (
+						{(isEVMNetwork || isStellar) && (
 							<Box
 								row
 								justifyContent="space-between"
@@ -341,7 +390,7 @@ export default function SendScreen() {
 						</Button>
 
 						{/* Non-EVM warning */}
-						{!isEVMNetwork && (
+						{!isEVMNetwork && !isStellar && (
 							<Box
 								row
 								alignItems="center"

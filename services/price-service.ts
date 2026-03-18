@@ -24,6 +24,8 @@ const COINGECKO_ID: Partial<Record<Network, string>> = {
 	[Network.ARBITRUM_SEPOLIA]: "arbitrum",
 	[Network.OPTIMISM_SEPOLIA]: "optimism",
 	[Network.BASE_SEPOLIA]: "base",
+	[Network.STELLAR]: "stellar",
+	[Network.STELLAR_TESTNET]: "stellar",
 };
 
 // ─── Types ────────────────────────────────────────────────────────────────────

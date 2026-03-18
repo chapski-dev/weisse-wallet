@@ -25,6 +25,8 @@ export const NETWORK_ICON_URLS: Partial<Record<Network, string>> = {
 	[Network.BASE_SEPOLIA]: `${TW}/base/info/logo.png`,
 	[Network.SOLANA_DEVNET]: `${TW}/solana/info/logo.png`,
 	[Network.BITCOIN_TESTNET]: `${TW}/bitcoin/info/logo.png`,
+	[Network.STELLAR]: `${TW}/stellar/info/logo.png`,
+	[Network.STELLAR_TESTNET]: `${TW}/stellar/info/logo.png`,
 };
 
 export interface TokenInfo {

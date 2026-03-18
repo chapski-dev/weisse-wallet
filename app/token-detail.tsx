@@ -2,21 +2,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import {
-	ActivityIndicator,
-	PanResponder,
-	ScrollView,
-	StyleSheet,
-	TouchableOpacity,
-	View,
+  ActivityIndicator,
+  PanResponder,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import {
-	Circle,
-	Defs,
-	Line,
-	LinearGradient,
-	Path,
-	Stop,
-	Svg,
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Path,
+  Stop,
+  Svg,
 } from "react-native-svg";
 
 import { Box } from "@/components/ui/builders/Box";
@@ -26,14 +26,14 @@ import { TokenIcon } from "@/components/wallet/token-icon";
 import { NETWORKS } from "@/constants/networks";
 import { useWallet } from "@/providers/wallet-provider";
 import {
-	type ChartPoint,
-	getTokenChartData,
-	getTokenPrice,
-	type PriceInfo,
+  type ChartPoint,
+  getTokenChartData,
+  getTokenPrice,
+  type PriceInfo,
 } from "@/services/price-service";
 import {
-	getTransactionHistory,
-	supportsTransactionHistory,
+  getTransactionHistory,
+  supportsTransactionHistory,
 } from "@/services/transaction-service";
 import { useAppTheme } from "@/theme/theme";
 import type { Network, Transaction } from "@/types/wallet";
@@ -469,8 +469,8 @@ export default function TokenDetailScreen() {
 
 				{/* Axis labels */}
 				<Box row justifyContent="space-between" px={20} mt={2}>
-					{axisLabels.map((lbl) => (
-						<Text key={lbl} variant="label" color="#4A4A6A">
+					{axisLabels.map((lbl, i) => (
+						<Text key={lbl + i.toString()} variant="label" color="#4A4A6A">
 							{lbl}
 						</Text>
 					))}
@@ -596,9 +596,9 @@ export default function TokenDetailScreen() {
 
 				{/* ── Action row ── */}
 				<Box row gap={12} px={20} mb={16}>
-					<TouchableOpacity
+					<Box
 						style={styles.actionBtn}
-						onPress={() => router.push("/send")}
+						onPress={() => router.push({ pathname: "/send", params: { network: netParam } })}
 						activeOpacity={0.85}
 					>
 						<Box
@@ -615,10 +615,10 @@ export default function TokenDetailScreen() {
 								Отправить
 							</Text>
 						</Box>
-					</TouchableOpacity>
-					<TouchableOpacity
+					</Box>
+					<Box
 						style={styles.actionBtn}
-						onPress={() => router.push("/receive")}
+						onPress={() => router.push({ pathname: "/receive", params: { network: netParam } })}
 						activeOpacity={0.85}
 					>
 						<Box
@@ -635,7 +635,7 @@ export default function TokenDetailScreen() {
 								Получить
 							</Text>
 						</Box>
-					</TouchableOpacity>
+					</Box>
 					<Box
 						style={styles.actionBtn}
 						h={72}

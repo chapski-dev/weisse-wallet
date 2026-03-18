@@ -10,6 +10,7 @@ export enum Network {
 	BASE = "base",
 	SOLANA = "solana",
 	BITCOIN = "bitcoin",
+	STELLAR = "stellar",
 
 	// Testnets
 	ETHEREUM_SEPOLIA = "ethereum_sepolia",
@@ -21,6 +22,7 @@ export enum Network {
 	BASE_SEPOLIA = "base_sepolia",
 	SOLANA_DEVNET = "solana_devnet",
 	BITCOIN_TESTNET = "bitcoin_testnet",
+	STELLAR_TESTNET = "stellar_testnet",
 }
 
 // Тип режима сети
@@ -37,6 +39,7 @@ export const TESTNET_MAP: Partial<Record<Network, Network>> = {
 	[Network.BASE]: Network.BASE_SEPOLIA,
 	[Network.SOLANA]: Network.SOLANA_DEVNET,
 	[Network.BITCOIN]: Network.BITCOIN_TESTNET,
+	[Network.STELLAR]: Network.STELLAR_TESTNET,
 };
 
 // Маппинг testnet -> mainnet
@@ -50,6 +53,7 @@ export const MAINNET_MAP: Partial<Record<Network, Network>> = {
 	[Network.BASE_SEPOLIA]: Network.BASE,
 	[Network.SOLANA_DEVNET]: Network.SOLANA,
 	[Network.BITCOIN_TESTNET]: Network.BITCOIN,
+	[Network.STELLAR_TESTNET]: Network.STELLAR,
 };
 
 // Информация о сети

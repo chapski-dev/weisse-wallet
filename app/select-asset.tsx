@@ -1,87 +1,30 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FlatList, ScrollView, StyleSheet, TextInput } from "react-native";
 
 import { Box } from "@/components/ui/builders/Box";
 import { Text } from "@/components/ui/builders/Text";
 import { ScreenHeader } from "@/components/ui/layouts/ScreenHeader";
 import { TokenIcon } from "@/components/wallet/token-icon";
+import { NETWORKS } from "@/constants/networks";
+import { useWallet } from "@/providers/wallet-provider";
+import { getTokenPrice } from "@/services/price-service";
 import { useAppTheme } from "@/theme/theme";
-import { Network } from "@/types/wallet";
+import { MAINNET_MAP, type Network } from "@/types/wallet";
 
 interface TokenItem {
 	symbol: string;
 	name: string;
 	amount: string;
 	usd: string;
-	network: string | null;
+	network: string | null; // mainnet-normalized network id for filter chips, null = multi-chain
+	accountNetwork?: Network; // undefined for multi-chain tokens (USDT, USDC)
 }
 
-const ALL_TOKENS: TokenItem[] = [
-	{
-		symbol: "USDT",
-		name: "Tether USD",
-		amount: "1 234.56 USDT",
-		usd: "$1 234.56",
-		network: null,
-	},
-	{
-		symbol: "USDC",
-		name: "USD Coin",
-		amount: "890.00 USDC",
-		usd: "$890.00",
-		network: null,
-	},
-	{
-		symbol: "BTC",
-		name: "Bitcoin",
-		amount: "0.05823 BTC",
-		usd: "$3 421.16",
-		network: "bitcoin",
-	},
-	{
-		symbol: "ETH",
-		name: "Ethereum",
-		amount: "2.4150 ETH",
-		usd: "$7 892.32",
-		network: "ethereum",
-	},
-	{
-		symbol: "SOL",
-		name: "Solana",
-		amount: "45.33 SOL",
-		usd: "$6 844.83",
-		network: "solana",
-	},
-	{
-		symbol: "BNB",
-		name: "BNB Token",
-		amount: "12.71 BNB",
-		usd: "$7 621.40",
-		network: "bsc",
-	},
-	{
-		symbol: "TRX",
-		name: "Tron",
-		amount: "15 230 TRX",
-		usd: "$1 523.90",
-		network: null,
-	},
-	{
-		symbol: "TON",
-		name: "Toncoin",
-		amount: "328.5 TON",
-		usd: "$1 642.50",
-		network: null,
-	},
-	{
-		symbol: "MATIC",
-		name: "Polygon",
-		amount: "4 500 MATIC",
-		usd: "$2 430.00",
-		network: "polygon",
-	},
+const MULTI_CHAIN_TOKENS: TokenItem[] = [
+	{ symbol: "USDT", name: "Tether USD", amount: "0 USDT", usd: "$0.00", network: null },
+	{ symbol: "USDC", name: "USD Coin", amount: "0 USDC", usd: "$0.00", network: null },
 ];
 
 const FILTER_CHIPS = [
@@ -89,25 +32,72 @@ const FILTER_CHIPS = [
 	{ id: "ethereum", label: "Ethereum" },
 	{ id: "bsc", label: "BNB Chain" },
 	{ id: "solana", label: "Solana" },
+	{ id: "stellar", label: "Stellar" },
 ];
 
-const TOKEN_TO_NETWORK: Partial<Record<string, Network>> = {
-	ETH: Network.ETHEREUM,
-	BTC: Network.BITCOIN,
-	SOL: Network.SOLANA,
-	BNB: Network.BSC,
-	MATIC: Network.POLYGON,
-};
+function formatBalance(balance: string, symbol: string): string {
+	const n = parseFloat(balance || "0");
+	if (n === 0) return `0 ${symbol}`;
+	if (n >= 1000) return `${n.toLocaleString("en-US", { maximumFractionDigits: 2 })} ${symbol}`;
+	if (n >= 1) return `${n.toFixed(4)} ${symbol}`;
+	return `${n.toFixed(8).replace(/0+$/, "").replace(/\.$/, "")} ${symbol}`;
+}
 
 export default function SelectAssetScreen() {
 	const router = useRouter();
 	const { colors } = useAppTheme();
 	const { mode = "receive" } = useLocalSearchParams<{ mode?: string }>();
+	const { getAccountsForCurrentMode } = useWallet();
 	const [search, setSearch] = useState("");
 	const [activeFilter, setActiveFilter] = useState("all");
+	const [prices, setPrices] = useState<Partial<Record<string, number>>>({});
+
+	const accounts = useMemo(
+		() => getAccountsForCurrentMode(),
+		[getAccountsForCurrentMode],
+	);
+
+	useEffect(() => {
+		let cancelled = false;
+		Promise.all(
+			accounts.map(async (acc) => {
+				const info = await getTokenPrice(acc.network);
+				return { network: acc.network, price: info?.price ?? 0 };
+			}),
+		).then((results) => {
+			if (cancelled) return;
+			const map: Record<string, number> = {};
+			for (const r of results) map[r.network] = r.price;
+			setPrices(map);
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [accounts]);
+
+	const tokens: TokenItem[] = useMemo(() => {
+		const nativeTokens = accounts.map((acc) => {
+			const networkInfo = NETWORKS[acc.network];
+			const { symbol, name } = networkInfo;
+			const filterNetwork = (MAINNET_MAP[acc.network] ?? acc.network) as string;
+			const balance = parseFloat(acc.balance || "0");
+			const price = prices[acc.network] ?? 0;
+			const usd = balance * price;
+
+			return {
+				symbol,
+				name,
+				amount: formatBalance(acc.balance, symbol),
+				usd: `$${usd.toFixed(2)}`,
+				network: filterNetwork,
+				accountNetwork: acc.network,
+			};
+		});
+		return [...MULTI_CHAIN_TOKENS, ...nativeTokens];
+	}, [accounts, prices]);
 
 	const filteredTokens = useMemo(() => {
-		let list = ALL_TOKENS;
+		let list = tokens;
 
 		if (activeFilter !== "all") {
 			list = list.filter(
@@ -125,19 +115,18 @@ export default function SelectAssetScreen() {
 		}
 
 		return list;
-	}, [activeFilter, search]);
+	}, [tokens, activeFilter, search]);
 
 	const handleSelect = (token: TokenItem) => {
-		if (token.symbol === "USDT" || token.symbol === "USDC") {
+		if (!token.accountNetwork) {
 			router.push({
 				pathname: "/select-network",
 				params: { token: token.symbol, mode },
 			});
 		} else {
-			const network = TOKEN_TO_NETWORK[token.symbol];
 			router.replace({
 				pathname: mode === "send" ? "/send" : "/receive",
-				params: network ? { network } : {},
+				params: { network: token.accountNetwork },
 			});
 		}
 	};
@@ -220,7 +209,7 @@ export default function SelectAssetScreen() {
 			{/* Token list */}
 			<FlatList
 				data={filteredTokens}
-				keyExtractor={(item) => item.symbol}
+				keyExtractor={(item) => item.accountNetwork ?? item.symbol}
 				renderItem={({ item }) => (
 					<Box
 						row
@@ -233,7 +222,7 @@ export default function SelectAssetScreen() {
 						onPress={() => handleSelect(item)}
 						activeOpacity={0.7}
 					>
-						<TokenIcon symbol={item.symbol} size={44} />
+						<TokenIcon symbol={item.symbol} networkId={item.accountNetwork} size={44} />
 						<Box flex gap={3}>
 							<Text variant="p3-semibold">{item.symbol}</Text>
 							<Text variant="p4" colorName="label">
@@ -258,6 +247,7 @@ const CHIP_COLORS: Record<string, string> = {
 	ethereum: "#627EEA",
 	bsc: "#F0B90B",
 	solana: "#9945FF",
+	stellar: "#7B68EE",
 };
 
 const styles = StyleSheet.create({

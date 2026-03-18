@@ -125,6 +125,19 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 								);
 								return account;
 							}
+						} else if (
+							account.network === Network.STELLAR ||
+							account.network === Network.STELLAR_TESTNET
+						) {
+							try {
+								const balance = await walletService.getStellarBalance(
+									account.network,
+									account.address,
+								);
+								return { ...account, balance };
+							} catch {
+								return account;
+							}
 						}
 						return account;
 					}),
@@ -169,6 +182,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 					}
 					await walletService.updateWalletInList(activeWallet);
 				}
+
+				// Add Stellar accounts for wallets created before Stellar support
+				const missingStellarNetworks = [
+					Network.STELLAR,
+					Network.STELLAR_TESTNET,
+				].filter((n) => !existingNetworks.has(n));
+				if (missingStellarNetworks.length > 0) {
+					try {
+						const stellarWallet = await walletService.getStellarWallet();
+						for (const network of missingStellarNetworks) {
+							activeWallet.accounts.push({
+								network,
+								address: stellarWallet.address,
+								balance: "0",
+								publicKey: stellarWallet.publicKey,
+							});
+						}
+						await walletService.updateWalletInList(activeWallet);
+					} catch (e) {
+						console.warn("Failed to add Stellar accounts:", e);
+					}
+				}
+
 				setWallet(activeWallet);
 				setIsInitialized(true);
 

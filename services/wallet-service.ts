@@ -1,11 +1,21 @@
 // Ensure polyfills are loaded first
 
-// Bitcoin
 import * as ecc from "@bitcoinerlab/secp256k1";
+import {
+	Account as StellarAccount,
+	Asset,
+	BASE_FEE,
+	Keypair as StellarKeypair,
+	Networks as StellarNetworks,
+	Operation,
+	TransactionBuilder,
+} from "@stellar/stellar-base";
 import { BIP32Factory } from "bip32";
 import * as bip39 from "bip39";
 import * as bitcoin from "bitcoinjs-lib";
 import { Buffer } from "buffer";
+import { hmac } from "@noble/hashes/hmac";
+import { sha512 } from "@noble/hashes/sha512";
 import * as Crypto from "expo-crypto";
 import {
 	createPublicClient,
@@ -35,15 +45,6 @@ import {
 import { NETWORKS } from "@/constants/networks";
 import { type MasterWallet, Network, type WalletAccount } from "@/types/wallet";
 import { secureStorage } from "@/utils/secure-storage";
-
-// Solana
-// import { Keypair } from '@solana/web3.js';
-
-// Stellar
-// import { Keypair as StellarKeypair } from '@stellar/stellar-sdk';
-
-// TRON
-// import { TronWeb } from 'tronweb';
 global.Buffer = global.Buffer || Buffer;
 
 const MNEMONIC_KEY = "wallet_mnemonic";
@@ -230,28 +231,131 @@ class WalletService {
 	//   return { address };
 	// }
 
-	// Получение Stellar кошелька
-	// async getStellarWallet(): Promise<{ address: string; publicKey: string }> {
-	//   const mnemonic = await this.loadMnemonic();
-	//   if (!mnemonic) {
-	//     throw new Error('No mnemonic found');
-	//   }
+	// SEP-0005 / SLIP-0010 ed25519 HD derivation — pure JS, no Node.js crypto
+	// Replaces ed25519-hd-key which depends on Node.js createHmac
+	private deriveStellarKey(path: string, seedHex: string): Uint8Array {
+		const MASTER_SECRET = new TextEncoder().encode("ed25519 seed");
+		const HARDENED_OFFSET = 0x80000000;
+		const seedBytes = Buffer.from(seedHex, "hex");
 
-	//   // Stellar использует ed25519 с derivation path m/44'/148'/0'
-	//   const seed = await bip39.mnemonicToSeed(mnemonic);
-	//   const derivationPath = "m/44'/148'/0'";
+		let I = hmac(sha512, MASTER_SECRET, seedBytes);
+		let key = I.slice(0, 32);
+		let chainCode = I.slice(32);
 
-	//   // Используем ed25519-hd-key для derivation
-	//   const derived = derivePath(derivationPath, seed.toString('hex'));
+		for (const segment of path.replace("m/", "").split("/")) {
+			const hardened = segment.endsWith("'");
+			const index =
+				(Number.parseInt(segment, 10) + (hardened ? HARDENED_OFFSET : 0)) >>> 0;
+			const data = new Uint8Array(37);
+			data[0] = 0x00;
+			data.set(key, 1);
+			data[33] = (index >>> 24) & 0xff;
+			data[34] = (index >>> 16) & 0xff;
+			data[35] = (index >>> 8) & 0xff;
+			data[36] = index & 0xff;
+			I = hmac(sha512, chainCode, data);
+			key = I.slice(0, 32);
+			chainCode = I.slice(32);
+		}
+		return key;
+	}
 
-	//   // Создаем Stellar keypair из raw seed
-	//   const keypair = StellarKeypair.fromRawEd25519Seed(Buffer.from(derived.key));
+	// Получение Stellar кошелька (SEP-0005: ed25519, m/44'/148'/0')
+	async getStellarWallet(): Promise<{
+		address: string;
+		publicKey: string;
+		secretKey: string;
+	}> {
+		const mnemonic = await this.loadMnemonic();
+		if (!mnemonic) {
+			throw new Error("No mnemonic found");
+		}
+		const seed = await bip39.mnemonicToSeed(mnemonic);
+		const key = this.deriveStellarKey("m/44'/148'/0'", seed.toString("hex"));
+		const keypair = StellarKeypair.fromRawEd25519Seed(Buffer.from(key));
+		return {
+			address: keypair.publicKey(),
+			publicKey: keypair.publicKey(),
+			secretKey: keypair.secret(),
+		};
+	}
 
-	//   return {
-	//     address: keypair.publicKey(),
-	//     publicKey: keypair.publicKey(),
-	//   };
-	// }
+	// Получение баланса Stellar (Horizon REST API)
+	async getStellarBalance(network: Network, address: string): Promise<string> {
+		const { rpcUrl } = NETWORKS[network];
+		try {
+			const res = await fetch(`${rpcUrl}/accounts/${address}`);
+			if (res.status === 404) return "0"; // аккаунт не пополнен
+			if (!res.ok) throw new Error(`HTTP ${res.status}`);
+			const data = await res.json();
+			const native = (
+				data.balances as Array<{ asset_type: string; balance: string }>
+			)?.find((b) => b.asset_type === "native");
+			return native?.balance ?? "0";
+		} catch (error) {
+			console.error(`Failed to get Stellar balance for ${network}:`, error);
+			return "0";
+		}
+	}
+
+	// Отправка Stellar транзакции
+	async sendStellarTransaction(
+		network: Network,
+		to: string,
+		amount: string,
+	): Promise<string> {
+		const { rpcUrl } = NETWORKS[network];
+		const { address, secretKey } = await this.getStellarWallet();
+		const keypair = StellarKeypair.fromSecret(secretKey);
+
+		// Получаем данные аккаунта (нужен sequence number)
+		const accRes = await fetch(`${rpcUrl}/accounts/${address}`);
+		if (!accRes.ok) {
+			throw new Error("Sender account not found. Fund it first.");
+		}
+		const accData = await accRes.json();
+		const sourceAccount = new StellarAccount(accData.id, accData.sequence);
+
+		const networkPassphrase =
+			network === Network.STELLAR
+				? StellarNetworks.PUBLIC
+				: StellarNetworks.TESTNET;
+
+		// Строим транзакцию (amount — строка с ≤7 знаками после запятой)
+		const xlmAmount = Number.parseFloat(amount).toFixed(7);
+		const transaction = new TransactionBuilder(sourceAccount, {
+			fee: BASE_FEE,
+			networkPassphrase,
+		})
+			.addOperation(
+				Operation.payment({
+					destination: to,
+					asset: Asset.native(),
+					amount: xlmAmount,
+				}),
+			)
+			.setTimeout(30)
+			.build();
+
+		transaction.sign(keypair);
+
+		// Отправляем как base64 XDR через form-encoded POST
+		const xdr = transaction.toEnvelope().toXDR("base64");
+		const submitRes = await fetch(`${rpcUrl}/transactions`, {
+			method: "POST",
+			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			body: `tx=${encodeURIComponent(xdr)}`,
+		});
+
+		const result = await submitRes.json();
+		if (!submitRes.ok) {
+			const code = result?.extras?.result_codes?.transaction;
+			throw new Error(
+				code ?? result?.detail ?? "Transaction failed",
+			);
+		}
+		return result.hash as string;
+	}
 
 	// Создание аккаунтов во всех сетях
 	async createAccountsForAllNetworks(): Promise<WalletAccount[]> {
@@ -308,17 +412,25 @@ class WalletService {
 		// }
 
 		// Stellar
-		// try {
-		//   const stellarWallet = await this.getStellarWallet();
-		//   accounts.push({
-		//     network: Network.STELLAR,
-		//     address: stellarWallet.address,
-		//     balance: '0',
-		//     publicKey: stellarWallet.publicKey,
-		//   });
-		// } catch (e) {
-		//   console.warn('Stellar wallet creation failed:', e);
-		// }
+		try {
+			const stellarWallet = await this.getStellarWallet();
+			accounts.push(
+				{
+					network: Network.STELLAR,
+					address: stellarWallet.address,
+					balance: "0",
+					publicKey: stellarWallet.publicKey,
+				},
+				{
+					network: Network.STELLAR_TESTNET,
+					address: stellarWallet.address,
+					balance: "0",
+					publicKey: stellarWallet.publicKey,
+				},
+			);
+		} catch (e) {
+			console.warn("Stellar wallet creation failed:", e);
+		}
 
 		return accounts;
 	}

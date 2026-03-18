@@ -234,6 +234,30 @@ export const NETWORKS: Record<Network, NetworkInfo> = {
 		derivationPath: "m/84'/1'/0'/0/0",
 		isTestnet: true,
 	},
+	[Network.STELLAR]: {
+		id: Network.STELLAR,
+		name: "Stellar",
+		symbol: "XLM",
+		rpcUrl: "https://horizon.stellar.org",
+		explorerUrl: "https://stellar.expert/explorer/public",
+		icon: "✦",
+		isEVM: false,
+		decimals: 7,
+		derivationPath: "m/44'/148'/0'",
+		isTestnet: false,
+	},
+	[Network.STELLAR_TESTNET]: {
+		id: Network.STELLAR_TESTNET,
+		name: "Stellar Testnet",
+		symbol: "XLM",
+		rpcUrl: "https://horizon-testnet.stellar.org",
+		explorerUrl: "https://stellar.expert/explorer/testnet",
+		icon: "✦",
+		isEVM: false,
+		decimals: 7,
+		derivationPath: "m/44'/148'/0'",
+		isTestnet: true,
+	},
 };
 
 // Фильтры для сетей
