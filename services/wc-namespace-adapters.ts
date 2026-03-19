@@ -34,6 +34,7 @@ const EVM_CHAINS = [
 	"eip155:42161", // Arbitrum
 	"eip155:10",    // Optimism
 	"eip155:8453",  // Base
+	"eip155:43114", // Avalanche
 ];
 
 const evmAdapter: WCNamespaceAdapter = {
