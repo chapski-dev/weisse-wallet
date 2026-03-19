@@ -7,10 +7,8 @@ import {
 	useEffect,
 	useState,
 } from "react";
-import { privateKeyToAccount } from "viem/accounts";
-import { walletService } from "@/services/wallet-service";
 import { walletConnectService } from "@/services/walletconnect-service";
-import { Network } from "@/types/wallet";
+import { WC_ADAPTERS } from "@/services/wc-namespace-adapters";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,6 +29,7 @@ export type WCRequest = {
 	topic: string;
 	method: string;
 	params: unknown[];
+	chainId: string;
 	peerName: string;
 	peerIcon?: string;
 };
@@ -105,6 +104,7 @@ export function WalletConnectProvider({
 						topic: event.topic,
 						method: event.params.request.method,
 						params: event.params.request.params,
+						chainId: event.params.chainId,
 						peerName: session?.peer?.metadata?.name ?? "Unknown dApp",
 						peerIcon: session?.peer?.metadata?.icons?.[0],
 					});
@@ -132,14 +132,44 @@ export function WalletConnectProvider({
 	// Одобрить подключение dApp
 	const approveProposal = useCallback(async () => {
 		if (!pendingProposal) return;
-		const { privateKey } = await walletService.getEVMWallet(Network.ETHEREUM);
-		const account = privateKeyToAccount(privateKey);
-		// Одобряем для основных EVM сетей
-		await walletConnectService.approveSession(
-			pendingProposal,
-			account.address,
-			[1, 137, 56, 42161, 10, 8453],
-		);
+
+		const requiredNS = pendingProposal.params.requiredNamespaces ?? {};
+		const optionalNS = pendingProposal.params.optionalNamespaces ?? {};
+		const requestedNS = new Set([
+			...Object.keys(requiredNS),
+			...Object.keys(optionalNS),
+		]);
+
+		const supportedNamespaces: Record<
+			string,
+			{ chains: string[]; methods: string[]; events: string[]; accounts: string[] }
+		> = {};
+
+		for (const adapter of WC_ADAPTERS) {
+			if (requestedNS.has(adapter.namespace)) {
+				const accounts = await adapter.getAccounts();
+
+				// Include all methods/events the dApp requests so buildApprovedNamespaces
+				// always finds an overlap, regardless of what names the dApp uses.
+				const proposalMethods = [
+					...(requiredNS[adapter.namespace]?.methods ?? []),
+					...(optionalNS[adapter.namespace]?.methods ?? []),
+				];
+				const proposalEvents = [
+					...(requiredNS[adapter.namespace]?.events ?? []),
+					...(optionalNS[adapter.namespace]?.events ?? []),
+				];
+
+				supportedNamespaces[adapter.namespace] = {
+					chains: adapter.chains,
+					methods: [...new Set([...adapter.methods, ...proposalMethods])],
+					events: [...new Set([...adapter.events, ...proposalEvents])],
+					accounts,
+				};
+			}
+		}
+
+		await walletConnectService.approveSession(pendingProposal, supportedNamespaces);
 		setPendingProposal(null);
 		refreshSessions();
 	}, [pendingProposal, refreshSessions]);
@@ -155,70 +185,35 @@ export function WalletConnectProvider({
 	const approveRequest = useCallback(async () => {
 		if (!pendingRequest) return;
 
-		const { privateKey } = await walletService.getEVMWallet(Network.ETHEREUM);
-		const account = privateKeyToAccount(privateKey);
+		const namespace = pendingRequest.chainId.split(":")[0];
+		const adapter = WC_ADAPTERS.find((a) => a.namespace === namespace);
 
-		let result: unknown;
-
-		switch (pendingRequest.method) {
-			case "personal_sign": {
-				const [message] = pendingRequest.params as [string, string];
-				result = await account.signMessage({
-					message: { raw: message as `0x${string}` },
-				});
-				break;
-			}
-			case "eth_sign": {
-				const [, message] = pendingRequest.params as [string, string];
-				result = await account.signMessage({
-					message: { raw: message as `0x${string}` },
-				});
-				break;
-			}
-			case "eth_signTypedData":
-			case "eth_signTypedData_v4": {
-				const [, typedDataJson] = pendingRequest.params as [string, string];
-				const typedData = JSON.parse(typedDataJson);
-				const { domain, types, primaryType, message } = typedData;
-				// eslint-disable-next-line @typescript-eslint/no-unused-vars
-				const { EIP712Domain: _, ...filteredTypes } = types;
-				result = await account.signTypedData({
-					domain,
-					types: filteredTypes,
-					primaryType,
-					message,
-				});
-				break;
-			}
-			case "eth_sendTransaction":
-			case "eth_signTransaction": {
-				// Для транзакций только подписываем — отправку делает dApp
-				const [tx] = pendingRequest.params as [
-					{ to: string; value?: string; data?: string; gas?: string },
-				];
-				result = await account.signTransaction({
-					to: tx.to as `0x${string}`,
-					value: tx.value ? BigInt(tx.value) : 0n,
-					data: (tx.data as `0x${string}`) ?? "0x",
-					gas: tx.gas ? BigInt(tx.gas) : undefined,
-					type: "legacy",
-				});
-				break;
-			}
-			default:
-				await walletConnectService.respondError(
-					pendingRequest.topic,
-					pendingRequest.id,
-				);
-				setPendingRequest(null);
-				return;
+		if (!adapter) {
+			await walletConnectService.respondError(
+				pendingRequest.topic,
+				pendingRequest.id,
+			);
+			setPendingRequest(null);
+			return;
 		}
 
-		await walletConnectService.respondSuccess(
-			pendingRequest.topic,
-			pendingRequest.id,
-			result,
-		);
+		try {
+			const result = await adapter.handleRequest(
+				pendingRequest.method,
+				pendingRequest.params,
+			);
+			await walletConnectService.respondSuccess(
+				pendingRequest.topic,
+				pendingRequest.id,
+				result,
+			);
+		} catch {
+			await walletConnectService.respondError(
+				pendingRequest.topic,
+				pendingRequest.id,
+			);
+		}
+
 		setPendingRequest(null);
 	}, [pendingRequest]);
 

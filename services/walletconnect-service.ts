@@ -19,16 +19,6 @@ const METADATA = {
 	icons: [],
 };
 
-const SUPPORTED_METHODS = [
-	"eth_sendTransaction",
-	"eth_signTransaction",
-	"eth_sign",
-	"personal_sign",
-	"eth_signTypedData",
-	"eth_signTypedData_v4",
-];
-
-const SUPPORTED_EVENTS = ["chainChanged", "accountsChanged"];
 
 // MMKV как storage — без async-storage
 const _mmkv = createMMKV({ id: "wc-storage" });
@@ -93,24 +83,15 @@ class WalletConnectService {
 
 	async approveSession(
 		proposal: WalletKitTypes.SessionProposal,
-		address: string,
-		chainIds: number[],
+		supportedNamespaces: Record<
+			string,
+			{ chains: string[]; methods: string[]; events: string[]; accounts: string[] }
+		>,
 	): Promise<void> {
-		const accounts = chainIds.map((id) => `eip155:${id}:${address}`);
-		const chains = chainIds.map((id) => `eip155:${id}`);
-
 		const namespaces = buildApprovedNamespaces({
 			proposal: proposal.params,
-			supportedNamespaces: {
-				eip155: {
-					chains,
-					methods: SUPPORTED_METHODS,
-					events: SUPPORTED_EVENTS,
-					accounts,
-				},
-			},
+			supportedNamespaces,
 		});
-
 		await this.walletKit?.approveSession({ id: proposal.id, namespaces });
 	}
 

@@ -1,14 +1,14 @@
-import { Ionicons } from "@expo/vector-icons";
-import type { WalletKitTypes } from "@reown/walletkit";
-import { Image, Modal, ScrollView, StyleSheet } from "react-native";
 import { Box } from "@/components/ui/builders/Box";
 import { Text } from "@/components/ui/builders/Text";
 import { Button } from "@/components/ui/shared/Button";
 import {
-	useWalletConnect,
-	type WCRequest,
+  useWalletConnect,
+  type WCRequest,
 } from "@/providers/walletconnect-provider";
 import { useAppTheme } from "@/theme/theme";
+import { Ionicons } from "@expo/vector-icons";
+import type { WalletKitTypes } from "@reown/walletkit";
+import { Image, Modal, ScrollView, StyleSheet } from "react-native";
 
 // ─── Session Proposal Modal ───────────────────────────────────────────────────
 
@@ -77,7 +77,7 @@ function ProposalModal({
 						<Ionicons
 							name="checkmark-circle"
 							size={16}
-							color={colors.success}
+							color={colors.green}
 						/>
 						<Text variant="p3" colorName="label">
 							{p}
