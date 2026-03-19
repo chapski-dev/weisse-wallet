@@ -29,10 +29,11 @@ export function TxRow({ tx, isLast }: TxRowProps) {
 				: "#EF4444";
 	const titleColor = tx.status === "failed" ? "#9CA3AF" : "#F9FAFB";
 	const prefix = tx.type === "incoming" ? "+" : "-";
+	const displaySymbol = tx.token ?? net?.symbol ?? "";
 	const title =
 		tx.type === "incoming"
-			? `Получение ${net?.symbol ?? ""}`
-			: `Отправка ${net?.symbol ?? ""}`;
+			? `Получение ${displaySymbol}`
+			: `Отправка ${displaySymbol}`;
 	const addr = tx.type === "incoming" ? tx.from : tx.to;
 
 	const handlePress = () => {
@@ -64,7 +65,7 @@ export function TxRow({ tx, isLast }: TxRowProps) {
 					backgroundColor={iconCfg.bg}
 				>
 					<Ionicons
-						name={iconCfg.icon as any}
+						name={iconCfg.icon as keyof typeof Ionicons.glyphMap}
 						size={20}
 						color={iconCfg.iconColor}
 					/>
@@ -77,7 +78,7 @@ export function TxRow({ tx, isLast }: TxRowProps) {
 						</Text>
 						<Text variant="p4-semibold" color={amountColor}>
 							{prefix}
-							{formatValue(tx.value)} {net?.symbol ?? ""}
+							{formatValue(tx.value)} {displaySymbol}
 						</Text>
 					</Box>
 

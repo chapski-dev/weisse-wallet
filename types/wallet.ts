@@ -98,4 +98,5 @@ export interface Transaction {
 	status: "pending" | "confirmed" | "failed";
 	type: "incoming" | "outgoing";
 	fee?: string;
+	token?: string; // ERC-20 symbol (e.g. "USDC"), absent for native transfers
 }

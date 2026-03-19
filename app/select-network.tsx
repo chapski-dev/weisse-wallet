@@ -146,19 +146,20 @@ const NETWORK_MAP: Partial<Record<string, Network>> = {
 export default function SelectNetworkScreen() {
 	const router = useRouter();
 	const { colors } = useAppTheme();
-	const { token = "USDT", mode = "receive" } = useLocalSearchParams<{
-		token?: string;
-		mode?: string;
+	const { token = "USDT" } = useLocalSearchParams<{
+		token: string;
 	}>();
 
 	const tokenColor = TOKEN_COLOR[token] ?? "#26A17B";
 
 	const handleSelectNetwork = (item: NetworkItem) => {
 		const network = NETWORK_MAP[item.id];
-		router.replace({
-			pathname: mode === "send" ? "/send" : "/receive",
-			params: network ? { network } : {},
-		});
+		if (network) {
+			router.replace({
+				pathname: "/token-detail",
+				params: { network, token },
+			});
+		}
 	};
 
 	return (

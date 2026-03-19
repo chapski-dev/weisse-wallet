@@ -22,6 +22,7 @@ import { BottomSlideModal } from "@/components/ui/shared/BottomSlideModal";
 import { Button } from "@/components/ui/shared/Button";
 import { Input } from "@/components/ui/shared/Input";
 import { NETWORKS } from "@/constants/networks";
+import { ERC20_CONTRACTS, ERC20_DECIMALS } from "@/constants/tokens";
 import { useWallet } from "@/providers/wallet-provider";
 import { walletService } from "@/services/wallet-service";
 import { useAppTheme } from "@/theme/theme";
@@ -31,14 +32,16 @@ export default function SendScreen() {
 	const router = useRouter();
 	const { colors, insets } = useAppTheme();
 	const { wallet, getActiveNetwork, refreshBalances } = useWallet();
-	const { network: networkParam } = useLocalSearchParams<{
+	const { network: networkParam, token: tokenParam } = useLocalSearchParams<{
 		network?: string;
+		token?: string;
 	}>();
 	const [recipient, setRecipient] = useState("");
 	const [amount, setAmount] = useState("");
 	const [isSending, setIsSending] = useState(false);
 	const [estimatedFeeEth, setEstimatedFeeEth] = useState<number>(0.0001);
 	const [isEstimatingFee, setIsEstimatingFee] = useState(false);
+	const [tokenBalance, setTokenBalance] = useState<string>("0");
 	const previewRef = useRef<BottomSheetModal>(null);
 
 	const activeNetwork = getActiveNetwork(
@@ -47,6 +50,23 @@ export default function SendScreen() {
 	const network = NETWORKS[activeNetwork];
 	const account = wallet?.accounts.find((a) => a.network === activeNetwork);
 
+	// Determine if this is an ERC-20 send
+	const isERC20 = !!tokenParam && !!ERC20_CONTRACTS[tokenParam];
+	const erc20ContractAddress = isERC20
+		? ERC20_CONTRACTS[tokenParam]?.[activeNetwork]
+		: undefined;
+	const erc20Decimals = isERC20 ? (ERC20_DECIMALS[tokenParam] ?? 6) : 6;
+	const displaySymbol = tokenParam ?? network.symbol;
+
+	// Load ERC-20 balance when token is set
+	useEffect(() => {
+		if (!isERC20 || !account || !erc20ContractAddress) return;
+		walletService
+			.getERC20Balance(activeNetwork, account.address, erc20ContractAddress, erc20Decimals)
+			.then(setTokenBalance);
+	}, [isERC20, account, erc20ContractAddress, activeNetwork, erc20Decimals]);
+
+	// Fee estimation
 	useEffect(() => {
 		if (!account || !network.isEVM) return;
 		if (!recipient || !amount || Number(amount) <= 0) return;
@@ -55,12 +75,24 @@ export default function SendScreen() {
 		const timer = setTimeout(async () => {
 			setIsEstimatingFee(true);
 			try {
-				const fee = await walletService.estimateEVMFee(
-					activeNetwork,
-					account.address,
-					recipient,
-					amount,
-				);
+				let fee: number;
+				if (isERC20 && erc20ContractAddress) {
+					fee = await walletService.estimateERC20Fee(
+						activeNetwork,
+						account.address,
+						erc20ContractAddress,
+						recipient,
+						amount,
+						erc20Decimals,
+					);
+				} else {
+					fee = await walletService.estimateEVMFee(
+						activeNetwork,
+						account.address,
+						recipient,
+						amount,
+					);
+				}
 				setEstimatedFeeEth(fee);
 			} catch {
 				// keep previous value
@@ -70,7 +102,7 @@ export default function SendScreen() {
 		}, 500);
 
 		return () => clearTimeout(timer);
-	}, [recipient, amount, account, activeNetwork, network.isEVM]);
+	}, [recipient, amount, account, activeNetwork, network.isEVM, isERC20, erc20ContractAddress, erc20Decimals]);
 
 	if (!account) {
 		return (
@@ -92,7 +124,9 @@ export default function SendScreen() {
 		activeNetwork === Network.STELLAR ||
 		activeNetwork === Network.STELLAR_TESTNET;
 	const STELLAR_FEE = 0.00001; // 100 stroops
-	const balance = parseFloat(account.balance);
+	const nativeBalance = parseFloat(account.balance);
+	// For ERC-20, show token balance; otherwise native
+	const balance = isERC20 ? parseFloat(tokenBalance) : nativeBalance;
 	const canSend = !!recipient && !!amount;
 	const feeDisplay = isEVMNetwork
 		? isEstimatingFee
@@ -123,10 +157,20 @@ export default function SendScreen() {
 			return;
 		}
 
-		if (isEVMNetwork && amountNum + estimatedFeeEth > balance) {
+		// For native EVM: check balance covers amount + fee
+		if (isEVMNetwork && !isERC20 && amountNum + estimatedFeeEth > nativeBalance) {
 			Alert.alert(
 				"Ошибка",
 				`Недостаточно средств с учётом комиссии сети (~${estimatedFeeEth.toFixed(6)} ${network.symbol})`,
+			);
+			return;
+		}
+
+		// For ERC-20: check native balance covers gas fee
+		if (isERC20 && estimatedFeeEth > nativeBalance) {
+			Alert.alert(
+				"Ошибка",
+				`Недостаточно ${network.symbol} для оплаты комиссии (~${estimatedFeeEth.toFixed(6)} ${network.symbol})`,
 			);
 			return;
 		}
@@ -166,6 +210,52 @@ export default function SendScreen() {
 						? "Ошибка последовательности. Повторите попытку."
 						: msg.includes("not found")
 							? "Аккаунт не найден. Пополните баланс (минимум 1 XLM)."
+							: "Не удалось отправить транзакцию";
+				Alert.alert("Ошибка", friendlyMessage);
+			} finally {
+				setIsSending(false);
+			}
+			return;
+		}
+
+		// ERC-20 send
+		if (isEVMNetwork && isERC20) {
+			if (!erc20ContractAddress) {
+				Alert.alert(
+					"Ошибка",
+					`${tokenParam} не поддерживается в сети ${network.name}`,
+				);
+				return;
+			}
+			setIsSending(true);
+			try {
+				const txHash = await walletService.sendERC20Transaction(
+					activeNetwork,
+					recipient,
+					erc20ContractAddress,
+					amount,
+					erc20Decimals,
+				);
+				Alert.alert(
+					"Успешно!",
+					`Транзакция отправлена\nHash: ${txHash.slice(0, 16)}...`,
+					[
+						{
+							text: "OK",
+							onPress: () => {
+								refreshBalances();
+								router.back();
+							},
+						},
+					],
+				);
+			} catch (error: unknown) {
+				const msg = error instanceof Error ? error.message : "";
+				const friendlyMessage =
+					msg.includes("insufficient") || msg.includes("ERC20InsufficientBalance")
+						? "Недостаточно средств для оплаты транзакции с учётом комиссии"
+						: msg.includes("rejected") || msg.includes("denied")
+							? "Транзакция отклонена"
 							: "Не удалось отправить транзакцию";
 				Alert.alert("Ошибка", friendlyMessage);
 			} finally {
@@ -256,7 +346,7 @@ export default function SendScreen() {
 					showsVerticalScrollIndicator={false}
 					contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
 				>
-					<ScreenHeader title={`Отправить ${network.symbol}`} />
+					<ScreenHeader title={`Отправить ${displaySymbol}`} />
 
 					{/* Available balance */}
 					<Box row justifyContent="center" alignItems="center" my={24}>
@@ -264,9 +354,30 @@ export default function SendScreen() {
 							Доступно:{" "}
 						</Text>
 						<Text variant="p3-semibold" color="#fff">
-							{balance.toFixed(6)} {network.symbol}
+							{balance.toFixed(6)} {displaySymbol}
 						</Text>
 					</Box>
+
+					{/* ERC-20 unsupported network warning */}
+					{isERC20 && !erc20ContractAddress && (
+						<Box
+							row
+							alignItems="center"
+							gap={8}
+							backgroundColor="#1C1405"
+							borderRadius={12}
+							borderWidth={1}
+							borderColor="#78350F"
+							p={12}
+							mx={20}
+							mb={16}
+						>
+							<Ionicons name="warning" size={16} color="#F59E0B" />
+							<Text variant="p4" color="#D97706" flex={1}>
+								{displaySymbol} не поддерживается в сети {network.name}
+							</Text>
+						</Box>
+					)}
 
 					<Box px={20}>
 						{/* Recipient */}
@@ -278,8 +389,8 @@ export default function SendScreen() {
 								value={recipient}
 								onChangeText={setRecipient}
 								placeholder={
-								isEVMNetwork ? "0x..." : isStellar ? "G..." : "Введите адрес"
-							}
+									isEVMNetwork ? "0x..." : isStellar ? "G..." : "Введите адрес"
+								}
 								autoCapitalize="none"
 								autoCorrect={false}
 								icon={
@@ -307,11 +418,13 @@ export default function SendScreen() {
 									onPress={() =>
 										setAmount(
 											String(
-												isEVMNetwork
-													? Math.max(0, balance - estimatedFeeEth)
-													: isStellar
-														? Math.max(0, balance - STELLAR_FEE)
-														: balance,
+												isERC20
+													? balance
+													: isEVMNetwork
+														? Math.max(0, balance - estimatedFeeEth)
+														: isStellar
+															? Math.max(0, balance - STELLAR_FEE)
+															: balance,
 											),
 										)
 									}
@@ -346,7 +459,7 @@ export default function SendScreen() {
 									alignItems="center"
 								>
 									<Text variant="p3-semibold" color="#6B7280">
-										{network.symbol}
+										{displaySymbol}
 									</Text>
 								</Box>
 							</Box>
@@ -376,7 +489,7 @@ export default function SendScreen() {
 						{/* Send button */}
 						<Button
 							onPress={handleSend}
-							disabled={!canSend || isEstimatingFee}
+							disabled={!canSend || isEstimatingFee || (isERC20 && !erc20ContractAddress)}
 							icon={
 								<Ionicons
 									name="send"
@@ -435,7 +548,7 @@ export default function SendScreen() {
 							Сумма
 						</Text>
 						<Text variant="p3-semibold" color="#fff">
-							{amount} {network.symbol}
+							{amount} {displaySymbol}
 						</Text>
 					</Box>
 

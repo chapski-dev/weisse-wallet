@@ -8,12 +8,14 @@ import { Box } from "@/components/ui/builders/Box";
 import { Text } from "@/components/ui/builders/Text";
 import { getNetworksByMode, NETWORKS } from "@/constants/networks";
 import { useWallet } from "@/providers/wallet-provider";
+import { ERC20_CONTRACTS, ERC20_DECIMALS } from "@/constants/tokens";
 import {
+  getERC20TransactionHistory,
   getTransactionHistory,
   supportsTransactionHistory,
 } from "@/services/transaction-service";
 import { useAppTheme } from "@/theme/theme";
-import { Network, type Transaction } from "@/types/wallet";
+import type { Network, Transaction } from "@/types/wallet";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, SectionList } from "react-native";
@@ -29,18 +31,15 @@ export default function HistoryScreen() {
 	const supportedNetworks = useMemo(
 		() =>
 			getNetworksByMode(networkMode).filter(
-				(n) =>
-					supportsTransactionHistory(n.id) &&
-					accounts.some((a) => a.network === n.id),
+				(net) =>
+					supportsTransactionHistory(net.id) &&
+					accounts.some((a) => a.network === net.id),
 			),
 		[accounts, networkMode],
 	);
-
 	const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
 	const [txFilter, setTxFilter] = useState<TxFilter>("all");
-	const [networkFilter, setNetworkFilter] = useState<Network | "all">(
-		Network.ETHEREUM_SEPOLIA,
-	);
+	const [networkFilter, setNetworkFilter] = useState<Network | "all">("all");
 	const [isLoading, setIsLoading] = useState(false);
 	const [networkErrors, setNetworkErrors] = useState<
 		{ name: string; message: string }[]
@@ -55,18 +54,46 @@ export default function HistoryScreen() {
 		setIsLoading(true);
 		setNetworkErrors([]);
 		try {
-			const results = await Promise.allSettled(
-				networksToFetch.map((net) => {
-					const account = accounts.find((a) => a.network === net.id);
-					if (!account) return Promise.resolve<Transaction[]>([]);
-					return getTransactionHistory(net.id, account.address);
-				}),
-			);
+			type NamedPromise = { label: string; promise: Promise<Transaction[]> };
+			const jobs: NamedPromise[] = [];
+
+			for (const net of networksToFetch) {
+				const account = accounts.find((a) => a.network === net.id);
+				if (!account) continue;
+
+				// Native token history
+				jobs.push({
+					label: NETWORKS[net.id].name,
+					promise: getTransactionHistory(net.id, account.address),
+				});
+
+				// ERC-20 history for every token that has a contract on this network
+				if (net.isEVM) {
+					for (const symbol of Object.keys(ERC20_CONTRACTS)) {
+						const contractAddress =
+							ERC20_CONTRACTS[symbol]?.[net.id as Network];
+						if (!contractAddress) continue;
+						const decimals = ERC20_DECIMALS[symbol] ?? 6;
+						jobs.push({
+							label: `${NETWORKS[net.id].name} ${symbol}`,
+							promise: getERC20TransactionHistory(
+								net.id,
+								account.address,
+								contractAddress,
+								decimals,
+								symbol,
+							),
+						});
+					}
+				}
+			}
+
+			const results = await Promise.allSettled(jobs.map((j) => j.promise));
 			const errors: { name: string; message: string }[] = [];
 			const merged = results.flatMap((r, i) => {
 				if (r.status === "fulfilled") return r.value;
 				errors.push({
-					name: NETWORKS[networksToFetch[i].id].name,
+					name: jobs[i].label,
 					message:
 						r.reason instanceof Error ? r.reason.message : String(r.reason),
 				});

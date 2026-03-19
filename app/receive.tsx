@@ -16,8 +16,9 @@ import { Network } from "@/types/wallet";
 export default function ReceiveScreen() {
 	const { colors } = useAppTheme();
 	const { wallet, getActiveNetwork } = useWallet();
-	const { network: networkParam } = useLocalSearchParams<{
+	const { network: networkParam, token: tokenParam } = useLocalSearchParams<{
 		network?: string;
+		token?: string;
 	}>();
 
 	const activeNetwork = getActiveNetwork(
@@ -25,6 +26,7 @@ export default function ReceiveScreen() {
 	);
 	const network = NETWORKS[activeNetwork];
 	const account = wallet?.accounts.find((a) => a.network === activeNetwork);
+	const displaySymbol = tokenParam ?? network.symbol;
 
 	if (!account) {
 		return (
@@ -56,7 +58,7 @@ export default function ReceiveScreen() {
 
 	return (
 		<Box backgroundColor={colors.background}>
-			<ScreenHeader title={`Получить ${network.symbol}`} />
+			<ScreenHeader title={`Получить ${displaySymbol}`} />
 			{/* QR container */}
 			<Box alignItems="center" my={24}>
 				<Box
@@ -149,7 +151,7 @@ export default function ReceiveScreen() {
 				>
 					<Ionicons name="warning" size={16} color="#F59E0B" />
 					<Text variant="p4" color="#D97706" flex={1}>
-						Отправляйте только {network.symbol} в сети {network.name}. Отправка
+						Отправляйте только {displaySymbol} в сети {network.name}. Отправка
 						других токенов может привести к потере средств.
 					</Text>
 				</Box>

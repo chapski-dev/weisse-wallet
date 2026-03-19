@@ -175,3 +175,37 @@ export function getTokenIconUrl(symbol: string): string | undefined {
 export function getNetworkIconUrl(networkId: Network): string | undefined {
 	return NETWORK_ICON_URLS[networkId];
 }
+
+// ─── ERC-20 contract addresses per network ───────────────────────────────────
+
+export const ERC20_CONTRACTS: Partial<
+	Record<string, Partial<Record<Network, `0x${string}`>>>
+> = {
+	USDC: {
+		[Network.ETHEREUM]: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+		[Network.ETHEREUM_SEPOLIA]: "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+		[Network.POLYGON]: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
+		[Network.POLYGON_AMOY]: "0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582",
+		[Network.BSC]: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+		[Network.BSC_TESTNET]: "0x64544969ed7EBf5f083679233325356EbE738930",
+		[Network.ARBITRUM]: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831",
+		[Network.ARBITRUM_SEPOLIA]: "0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d",
+		[Network.OPTIMISM]: "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85",
+		[Network.OPTIMISM_SEPOLIA]: "0x5fd84259d66Cd46123540766Be93DFE6D43130D7",
+		[Network.BASE]: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+		[Network.BASE_SEPOLIA]: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+	},
+	USDT: {
+		[Network.ETHEREUM]: "0xdAC17F958D2ee523a2206206994597C13D831ec7",
+		[Network.POLYGON]: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F",
+		[Network.BSC]: "0x55d398326f99059fF775485246999027B3197955",
+		[Network.ARBITRUM]: "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9",
+		[Network.OPTIMISM]: "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58",
+		[Network.AVALANCHE]: "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7",
+	},
+};
+
+export const ERC20_DECIMALS: Record<string, number> = {
+	USDC: 6,
+	USDT: 6,
+};

@@ -10,6 +10,16 @@ export const NET_PILL: Partial<Record<Network, { bg: string; color: string }>> =
 		[Network.POLYGON_AMOY]: { bg: "#1A0A2A", color: "#A855F7" },
 		[Network.BSC]: { bg: "#1A1500", color: "#F59E0B" },
 		[Network.BSC_TESTNET]: { bg: "#1A1500", color: "#F59E0B" },
+		[Network.ARBITRUM]: { bg: "#0A1929", color: "#28A0F0" },
+		[Network.ARBITRUM_SEPOLIA]: { bg: "#0A1929", color: "#28A0F0" },
+		[Network.OPTIMISM]: { bg: "#1A0505", color: "#FF0420" },
+		[Network.OPTIMISM_SEPOLIA]: { bg: "#1A0505", color: "#FF0420" },
+		[Network.BASE]: { bg: "#00050F", color: "#0052FF" },
+		[Network.BASE_SEPOLIA]: { bg: "#00050F", color: "#0052FF" },
+		[Network.AVALANCHE]: { bg: "#1A0505", color: "#E84142" },
+		[Network.AVALANCHE_FUJI]: { bg: "#1A0505", color: "#E84142" },
+		[Network.STELLAR]: { bg: "#050A1A", color: "#7B68EE" },
+		[Network.STELLAR_TESTNET]: { bg: "#050A1A", color: "#7B68EE" },
 	};
 
 export function getNetPill(n: Network) {

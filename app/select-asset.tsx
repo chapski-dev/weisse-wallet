@@ -8,8 +8,10 @@ import { Text } from "@/components/ui/builders/Text";
 import { ScreenHeader } from "@/components/ui/layouts/ScreenHeader";
 import { TokenIcon } from "@/components/wallet/token-icon";
 import { NETWORKS } from "@/constants/networks";
+import { ERC20_CONTRACTS, ERC20_DECIMALS } from "@/constants/tokens";
 import { useWallet } from "@/providers/wallet-provider";
 import { getTokenPrice } from "@/services/price-service";
+import { walletService } from "@/services/wallet-service";
 import { useAppTheme } from "@/theme/theme";
 import { MAINNET_MAP, type Network } from "@/types/wallet";
 
@@ -51,6 +53,7 @@ export default function SelectAssetScreen() {
 	const [search, setSearch] = useState("");
 	const [activeFilter, setActiveFilter] = useState("all");
 	const [prices, setPrices] = useState<Partial<Record<string, number>>>({});
+	const [erc20Balances, setErc20Balances] = useState<Record<string, string>>({});
 
 	const accounts = useMemo(
 		() => getAccountsForCurrentMode(),
@@ -75,7 +78,49 @@ export default function SelectAssetScreen() {
 		};
 	}, [accounts]);
 
+	// Fetch real ERC-20 balances for USDC / USDT (summed across all networks)
+	useEffect(() => {
+		if (accounts.length === 0) return;
+		let cancelled = false;
+		for (const symbol of Object.keys(ERC20_CONTRACTS)) {
+			const contracts = ERC20_CONTRACTS[symbol] ?? {};
+			const decimals = ERC20_DECIMALS[symbol] ?? 6;
+			const relevant = accounts.filter((a) => a.network in contracts);
+			if (relevant.length === 0) continue;
+			Promise.all(
+				relevant.map((acc) => {
+					const addr = contracts[acc.network as Network];
+					if (!addr) return Promise.resolve("0");
+					return walletService.getERC20Balance(
+						acc.network,
+						acc.address,
+						addr,
+						decimals,
+					);
+				}),
+			).then((balances) => {
+				if (cancelled) return;
+				const total = balances.reduce((sum, b) => sum + parseFloat(b), 0);
+				setErc20Balances((prev) => ({ ...prev, [symbol]: total.toString() }));
+			});
+		}
+		return () => {
+			cancelled = true;
+		};
+	}, [accounts]);
+
 	const tokens: TokenItem[] = useMemo(() => {
+		const multiChain = MULTI_CHAIN_TOKENS.map((t) => {
+			const bal = erc20Balances[t.symbol];
+			if (!bal) return t;
+			const n = parseFloat(bal);
+			return {
+				...t,
+				amount: formatBalance(bal, t.symbol),
+				usd: `$${n.toFixed(2)}`,
+			};
+		});
+
 		const nativeTokens = accounts.map((acc) => {
 			const networkInfo = NETWORKS[acc.network];
 			const { symbol, name } = networkInfo;
@@ -93,8 +138,8 @@ export default function SelectAssetScreen() {
 				accountNetwork: acc.network,
 			};
 		});
-		return [...MULTI_CHAIN_TOKENS, ...nativeTokens];
-	}, [accounts, prices]);
+		return [...multiChain, ...nativeTokens];
+	}, [accounts, prices, erc20Balances]);
 
 	const filteredTokens = useMemo(() => {
 		let list = tokens;
@@ -121,7 +166,7 @@ export default function SelectAssetScreen() {
 		if (!token.accountNetwork) {
 			router.push({
 				pathname: "/select-network",
-				params: { token: token.symbol, mode },
+				params: { token: token.symbol },
 			});
 		} else {
 			router.replace({

@@ -1,4 +1,4 @@
-import { formatEther } from "viem";
+import { formatEther, formatUnits } from "viem";
 
 import { Network, type Transaction } from "@/types/wallet";
 
@@ -172,6 +172,65 @@ export async function getTransactionHistory(
 				: Date.now(),
 			status,
 			type: fromHash.toLowerCase() === lowerAddress ? "outgoing" : "incoming",
+		};
+	});
+}
+
+export async function getERC20TransactionHistory(
+	network: Network,
+	address: string,
+	contractAddress: string,
+	decimals: number,
+	tokenSymbol?: string,
+	limit = 25,
+): Promise<Transaction[]> {
+	const baseUrl = BLOCKSCOUT_URLS[network];
+	if (!baseUrl) return [];
+
+	const url = `${baseUrl}/api/v2/addresses/${address}/token-transfers?token=${contractAddress}`;
+
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), 15000);
+
+	let res: Response;
+	try {
+		res = await fetch(url, {
+			headers: { Accept: "application/json" },
+			signal: controller.signal,
+		});
+	} finally {
+		clearTimeout(timeout);
+	}
+
+	if (!res.ok) return [];
+
+	const json = await res.json();
+	const items: BlockscoutItem[] = (json.items ?? []).slice(0, limit);
+	const lowerAddress = address.toLowerCase();
+
+	return items.map((item): Transaction => {
+		const fromHash: string = item.from?.hash ?? "";
+		const toHash: string = item.to?.hash ?? "";
+		const raw = item as unknown as {
+			total?: { value?: string; decimals?: string };
+			transaction_hash?: string;
+			timestamp?: string;
+		};
+		const rawValue = BigInt(raw.total?.value ?? "0");
+		const itemDecimals = parseInt(raw.total?.decimals ?? String(decimals), 10);
+		const value = formatUnits(rawValue, itemDecimals);
+		const hash = raw.transaction_hash ?? item.hash;
+
+		return {
+			hash,
+			from: fromHash,
+			to: toHash,
+			value,
+			network,
+			timestamp: raw.timestamp ? new Date(raw.timestamp).getTime() : Date.now(),
+			status: "confirmed",
+			type: fromHash.toLowerCase() === lowerAddress ? "outgoing" : "incoming",
+			...(tokenSymbol ? { token: tokenSymbol } : {}),
 		};
 	});
 }

@@ -22,7 +22,7 @@ export function NetworkFilter({ networks, value, onChange }: NetworkFilterProps)
 			{[null, ...networks].map((net) => {
 				const id = net?.id ?? "all";
 				const isActive = value === id;
-				const label = net ? `${net.icon} ${net.symbol}` : "Все сети";
+				const label = net ? `${net.icon} ${net.name}` : "Все сети";
 				return (
 					<Box
 						key={id}

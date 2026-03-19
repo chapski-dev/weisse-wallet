@@ -32,11 +32,14 @@ import {
   type PriceInfo,
 } from "@/services/price-service";
 import {
+  getERC20TransactionHistory,
   getTransactionHistory,
   supportsTransactionHistory,
 } from "@/services/transaction-service";
+import { walletService } from "@/services/wallet-service";
 import { useAppTheme } from "@/theme/theme";
 import type { Network, Transaction } from "@/types/wallet";
+import { ERC20_CONTRACTS, ERC20_DECIMALS } from "@/constants/tokens";
 
 // ─── Chart helpers ────────────────────────────────────────────────────────────
 
@@ -294,16 +297,37 @@ function TxRow({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function TokenDetailScreen() {
-	const { network: netParam } = useLocalSearchParams<{ network: string }>();
+	const { network: netParam, token: tokenParam } = useLocalSearchParams<{
+		network: string;
+		token?: string;
+	}>();
 	const { colors, insets } = useAppTheme();
-	const { getAccountsForCurrentMode } = useWallet();
+	const { getAccountsForCurrentMode, getActiveNetwork } = useWallet();
 
-	const network = NETWORKS[netParam as Network];
+	const activeNetwork = getActiveNetwork(netParam as Network);
+	const network = NETWORKS[activeNetwork];
 	const accounts = getAccountsForCurrentMode();
-	const account = accounts.find((a) => a.network === netParam);
+	const account = accounts.find((a) => a.network === activeNetwork);
+
+	// ERC-20 mode
+	const isERC20 = !!tokenParam && !!ERC20_CONTRACTS[tokenParam];
+	const erc20Contract = isERC20
+		? ERC20_CONTRACTS[tokenParam]?.[activeNetwork]
+		: undefined;
+	const erc20Decimals = isERC20 ? (ERC20_DECIMALS[tokenParam] ?? 6) : 6;
+	const displaySymbol = tokenParam ?? network?.symbol;
+
+	const [erc20Balance, setErc20Balance] = useState("0");
+
+	useEffect(() => {
+		if (!isERC20 || !account || !erc20Contract) return;
+		walletService
+			.getERC20Balance(activeNetwork, account.address, erc20Contract, erc20Decimals)
+			.then(setErc20Balance);
+	}, [isERC20, account, erc20Contract, activeNetwork, erc20Decimals]);
 
 	const [priceInfo, setPriceInfo] = useState<PriceInfo>({
-		price: 0,
+		price: isERC20 ? 1 : 0,
 		change24h: 0,
 	});
 	const positive = priceInfo.change24h >= 0;
@@ -322,34 +346,44 @@ export default function TokenDetailScreen() {
 	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
-		getTokenPrice(netParam as Network).then((info) => {
+		if (isERC20) return; // stablecoins stay at $1
+		getTokenPrice(activeNetwork).then((info) => {
 			if (info) setPriceInfo(info);
 		});
-	}, [netParam]);
+	}, [activeNetwork, isERC20]);
 
 	useEffect(() => {
 		setChartLoading(true);
-		getTokenChartData(netParam as Network, range)
+		getTokenChartData(activeNetwork, range)
 			.then(setChartPoints)
 			.catch(() => setChartPoints([]))
 			.finally(() => setChartLoading(false));
-	}, [netParam, range]);
+	}, [activeNetwork, range]);
 
 	const loadTxs = useCallback(async () => {
-		if (!account || !supportsTransactionHistory(netParam as Network)) return;
+		if (!account) return;
 		setLoading(true);
 		try {
-			const data = await getTransactionHistory(
-				netParam as Network,
-				account.address,
-			);
+			let data: Transaction[];
+			if (isERC20 && erc20Contract) {
+				data = await getERC20TransactionHistory(
+					activeNetwork,
+					account.address,
+					erc20Contract,
+					erc20Decimals,
+				);
+			} else if (supportsTransactionHistory(activeNetwork)) {
+				data = await getTransactionHistory(activeNetwork, account.address);
+			} else {
+				data = [];
+			}
 			setTxs(data.slice(0, 10));
 		} catch {
 			setTxs([]);
 		} finally {
 			setLoading(false);
 		}
-	}, [account, netParam]);
+	}, [account, activeNetwork, isERC20, erc20Contract, erc20Decimals]);
 
 	useEffect(() => {
 		loadTxs();
@@ -370,7 +404,7 @@ export default function TokenDetailScreen() {
 		);
 	}
 
-	const balNum = parseFloat(account.balance);
+	const balNum = isERC20 ? parseFloat(erc20Balance) : parseFloat(account.balance);
 	const usdVal = balNum * priceInfo.price;
 	const chgAmt = usdVal * (priceInfo.change24h / 100);
 
@@ -402,7 +436,7 @@ export default function TokenDetailScreen() {
 	return (
 		<Box flex backgroundColor="#0D0D1C">
 			<ScreenHeader
-				title={network.name}
+				title={isERC20 ? (displaySymbol ?? network.name) : network.name}
 				right={<Ionicons name="ellipsis-horizontal" size={24} color="#fff" />}
 			/>
 
@@ -413,7 +447,7 @@ export default function TokenDetailScreen() {
 			>
 				{/* ── Hero ── */}
 				<Box alignItems="center" gap={4} px={20} pt={12} pb={20}>
-					<TokenIcon symbol={network.symbol} networkId={network.id} size={56} />
+					<TokenIcon symbol={displaySymbol ?? network.symbol} networkId={network.id} size={56} />
 					<Text variant="caption" color="#7A7A9A" mt={4}>
 						{displayTime ?? network.name}
 					</Text>
@@ -549,13 +583,13 @@ export default function TokenDetailScreen() {
 						>
 							<Box w={8} h={8} borderRadius={4} backgroundColor="#627EEA" />
 							<Text variant="caption" color="#A0A0C0">
-								{network.symbol} · {network.name}
+								{displaySymbol} · {network.name}
 							</Text>
 						</Box>
 					</Box>
 
 					<Text variant="h3" color="#fff" mt={4}>
-						{balNum.toFixed(4)} {network.symbol}
+						{balNum.toFixed(4)} {displaySymbol}
 					</Text>
 					<Text variant="p3" color="#7A7A9A">
 						≈{" "}
@@ -598,7 +632,7 @@ export default function TokenDetailScreen() {
 				<Box row gap={12} px={20} mb={16}>
 					<Box
 						style={styles.actionBtn}
-						onPress={() => router.push({ pathname: "/send", params: { network: netParam } })}
+						onPress={() => router.push({ pathname: "/send", params: isERC20 && tokenParam ? { network: activeNetwork, token: tokenParam } : { network: activeNetwork } })}
 						activeOpacity={0.85}
 					>
 						<Box
@@ -618,7 +652,7 @@ export default function TokenDetailScreen() {
 					</Box>
 					<Box
 						style={styles.actionBtn}
-						onPress={() => router.push({ pathname: "/receive", params: { network: netParam } })}
+						onPress={() => router.push({ pathname: "/receive", params: isERC20 && tokenParam ? { network: activeNetwork, token: tokenParam } : { network: activeNetwork } })}
 						activeOpacity={0.85}
 					>
 						<Box
@@ -697,7 +731,7 @@ export default function TokenDetailScreen() {
 							<TxRow
 								key={tx.hash}
 								tx={tx}
-								symbol={network.symbol}
+								symbol={displaySymbol ?? network.symbol}
 								isLast={i === txs.length - 1}
 							/>
 						))

@@ -21,8 +21,10 @@ import {
 	createPublicClient,
 	createWalletClient,
 	formatEther,
+	formatUnits,
 	http,
 	parseEther,
+	parseUnits,
 } from "viem";
 import { mnemonicToAccount, privateKeyToAccount } from "viem/accounts";
 import {
@@ -49,6 +51,26 @@ global.Buffer = global.Buffer || Buffer;
 
 const MNEMONIC_KEY = "wallet_mnemonic";
 const WALLET_DATA_KEY = "wallet_data";
+
+const ERC20_ABI = [
+	{
+		name: "balanceOf",
+		type: "function",
+		stateMutability: "view",
+		inputs: [{ name: "account", type: "address" }],
+		outputs: [{ name: "", type: "uint256" }],
+	},
+	{
+		name: "transfer",
+		type: "function",
+		stateMutability: "nonpayable",
+		inputs: [
+			{ name: "to", type: "address" },
+			{ name: "amount", type: "uint256" },
+		],
+		outputs: [{ name: "", type: "bool" }],
+	},
+] as const;
 
 // Multi-wallet storage keys
 const WALLETS_LIST_KEY = "wallets_list";
@@ -517,6 +539,84 @@ class WalletService {
 			gasPrice = await client.getGasPrice();
 		}
 
+		return parseFloat(formatEther(gasLimit * gasPrice));
+	}
+
+	// Получение баланса ERC-20 токена
+	async getERC20Balance(
+		network: Network,
+		address: string,
+		contractAddress: string,
+		decimals: number,
+	): Promise<string> {
+		const chain = this.getViemChain(network);
+		const client = createPublicClient({
+			chain,
+			transport: http(NETWORKS[network].rpcUrl),
+		});
+		try {
+			const raw = await client.readContract({
+				address: contractAddress as `0x${string}`,
+				abi: ERC20_ABI,
+				functionName: "balanceOf",
+				args: [address as `0x${string}`],
+			});
+			return formatUnits(raw as bigint, decimals);
+		} catch {
+			return "0";
+		}
+	}
+
+	// Отправка ERC-20 токена
+	async sendERC20Transaction(
+		network: Network,
+		to: string,
+		contractAddress: string,
+		amount: string,
+		decimals: number,
+	): Promise<string> {
+		const { privateKey } = await this.getEVMWallet(network);
+		const chain = this.getViemChain(network);
+		const account = privateKeyToAccount(privateKey);
+		const walletClient = createWalletClient({
+			account,
+			chain,
+			transport: http(NETWORKS[network].rpcUrl.trim()),
+		});
+		return walletClient.writeContract({
+			address: contractAddress as `0x${string}`,
+			abi: ERC20_ABI,
+			functionName: "transfer",
+			args: [to as `0x${string}`, parseUnits(amount, decimals)],
+		});
+	}
+
+	// Оценка комиссии для ERC-20 транзакции
+	async estimateERC20Fee(
+		network: Network,
+		from: string,
+		contractAddress: string,
+		to: string,
+		amount: string,
+		decimals: number,
+	): Promise<number> {
+		const chain = this.getViemChain(network);
+		const client = createPublicClient({
+			chain,
+			transport: http(NETWORKS[network].rpcUrl),
+		});
+		const [gasLimit, feesPerGas] = await Promise.all([
+			client.estimateContractGas({
+				address: contractAddress as `0x${string}`,
+				abi: ERC20_ABI,
+				functionName: "transfer",
+				args: [to as `0x${string}`, parseUnits(amount, decimals)],
+				account: from as `0x${string}`,
+			}),
+			client.estimateFeesPerGas().catch(() => null),
+		]);
+		const gasPrice =
+			feesPerGas?.maxFeePerGas ?? (await client.getGasPrice());
 		return parseFloat(formatEther(gasLimit * gasPrice));
 	}
 
